@@ -27,7 +27,7 @@ def demo_1_llm_benchmark_config():
     print("Demo 1: LLM Benchmark Configuration")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane import (
+    from sage.benchmark_control_plane import (
         ArrivalPattern,
         LLMBenchmarkConfig,
         LLMSLOConfig,
@@ -80,7 +80,7 @@ def demo_2_hybrid_benchmark_config():
     print("Demo 2: Hybrid Benchmark Configuration")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane.hybrid_scheduler import (
+    from sage.benchmark_control_plane.hybrid_scheduler import (
         HybridBenchmarkConfig,
         HybridSLOConfig,
     )
@@ -129,11 +129,11 @@ def demo_3_workload_generation():
     print("Demo 3: Workload Generation")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane import (
+    from sage.benchmark_control_plane import (
         LLMBenchmarkConfig,
         LLMWorkloadGenerator,
     )
-    from sage.benchmark.benchmark_control_plane.hybrid_scheduler import (
+    from sage.benchmark_control_plane.hybrid_scheduler import (
         HybridBenchmarkConfig,
         HybridWorkloadGenerator,
     )
@@ -179,7 +179,7 @@ def demo_4_strategy_adapter():
     print("Demo 4: Available Scheduling Strategies")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane import StrategyAdapter
+    from sage.benchmark_control_plane import StrategyAdapter
 
     print("\nAvailable strategies:")
     strategy_names = StrategyAdapter.list_strategies()
@@ -199,7 +199,7 @@ def demo_5_gpu_monitor():
     print("Demo 5: GPU Monitoring")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane import GPUMonitor
+    from sage.benchmark_control_plane import GPUMonitor
 
     # Auto-detect backend (will use mock if no GPU)
     monitor = GPUMonitor()
@@ -230,10 +230,10 @@ def demo_6_metrics_collection():
     print("Demo 6: Metrics Collection")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane.llm_scheduler.client import (
+    from sage.benchmark_control_plane.llm_scheduler.client import (
         LLMRequestResult,
     )
-    from sage.benchmark.benchmark_control_plane.llm_scheduler.metrics import (
+    from sage.benchmark_control_plane.llm_scheduler.metrics import (
         LLMMetricsCollector,
     )
 
@@ -296,7 +296,7 @@ def demo_7_chart_generation():
         print("  matplotlib not installed, skipping chart demo")
         return
 
-    from sage.benchmark.benchmark_control_plane.visualization import BenchmarkCharts
+    from sage.benchmark_control_plane.visualization import BenchmarkCharts
 
     with tempfile.TemporaryDirectory() as tmpdir:
         output_dir = Path(tmpdir)
@@ -416,7 +416,7 @@ async def demo_9_mock_benchmark_run():
     print("Demo 9: Mock Benchmark Run")
     print("=" * 60)
 
-    from sage.benchmark.benchmark_control_plane import (
+    from sage.benchmark_control_plane import (
         LLMBenchmarkConfig,
         LLMBenchmarkRunner,
     )
