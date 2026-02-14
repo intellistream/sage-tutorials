@@ -254,7 +254,7 @@ tools:
 ## 📚 Related Documentation
 
 - **Configuration Loader**: `packages/sage-common/src/sage/common/utils/config/`
-- **RAG Configuration**: `docs/dev-notes/EMBEDDING_README.md`
+- **RAG Configuration**: `CHANGELOG.md`
 - **Environment Setup**: `.env.example`
 
 ## ⚠️ Notes

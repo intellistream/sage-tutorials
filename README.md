@@ -46,7 +46,7 @@ SAGE 采用 **5 层分层架构**，从底层基础设施到顶层应用：
 
 - ✅ **单向依赖**：只能向下依赖（L5→L4→L3→L2→L1）
 - ❌ **禁止反向**：禁止向上或循环依赖
-- 📚 **详细说明**：[SAGE 包架构文档](../../docs-public/docs_src/dev-notes/package-architecture.md)
+- 📚 **详细说明**：[SAGE 包架构文档](https://intellistream.github.io/SAGE-Pub/concepts/architecture/package-structure/)
 
 ## 📚 Tutorial 目录结构
 
@@ -291,7 +291,7 @@ ______________________________________________________________________
 1. 查看 [TROUBLESHOOTING.md](L3-libs/unlearning/docs/TROUBLESHOOTING.md)
 1. 检查示例的注释和 docstring
 1. 阅读对应层级的 README
-1. 查看 [SAGE 包架构文档](../../docs-public/docs_src/dev-notes/package-architecture.md)
+1. 查看 [SAGE 包架构文档](https://intellistream.github.io/SAGE-Pub/concepts/architecture/package-structure/)
 1. 提交 Issue 到 GitHub
 
 ## 🤝 贡献

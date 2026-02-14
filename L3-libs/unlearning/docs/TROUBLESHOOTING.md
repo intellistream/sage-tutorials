@@ -645,7 +645,7 @@ logger.warning(f"Privacy budget: {remaining_budget}")
 **常见资源:**
 
 - SAGE 官方文档: docs/
-- 研发笔记: docs/dev-notes/
+- 版本变更记录: CHANGELOG.md
 - API 参考: 源码中的 docstring
 
 ______________________________________________________________________
