@@ -9,9 +9,9 @@ from typing import Any, Iterable
 
 from sage.cli.utils.env import get_api_key, load_environment_file, should_use_real_api
 from sage.common.utils.config.loader import load_config
-from sage.libs.agentic.agents.action.mcp_registry import MCPRegistry
-from sage.libs.agentic.agents.planning.simple_llm_planner import SimpleLLMPlanner
-from sage.libs.agentic.agents.profile.profile import BaseProfile
+from sage_libs.sage_agentic.agents.action.mcp_registry import MCPRegistry
+from sage_libs.sage_agentic.agents.planning.simple_llm_planner import SimpleLLMPlanner
+from sage_libs.sage_agentic.agents.profile.profile import BaseProfile
 from sage.middleware.operators.agent.runtime import AgentRuntime
 from sage.middleware.operators.rag import OpenAIGenerator
 

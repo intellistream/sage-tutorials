@@ -1,17 +1,17 @@
-"""Tutorial: SAGE vLLM Control Plane - Intelligent Request Scheduling
+"""Tutorial: sageLLM Control Plane - Intelligent Request Scheduling
 
-Demonstrates ControlPlaneVLLMService API usage with real examples.
+Demonstrates sageLLM's ControlPlaneVLLMService API usage with real examples.
 
-This tutorial shows how to use the Control Plane for intelligent request
+This tutorial shows how to use the sageLLM Control Plane for intelligent request
 scheduling across multiple vLLM instances.
 
 In test/CI mode, only configuration examples are shown without requiring
 actual vLLM servers.
 
-Usage: python tutorials/vllm_control_plane_tutorial.py
+Usage: python tutorials/sagellm_control_plane_tutorial.py
 
 Requirements:
-    pip install isage-llm-core>=0.2.0
+    pip install isagellm>=0.4.0
 
 Test Configuration:
     @test_category: tutorials
@@ -29,14 +29,14 @@ _IS_TEST_MODE = (
 
 try:
     from sage.common.config.ports import SagePorts
-    from sage.llm import ControlPlaneVLLMService
+    from isagellm import ControlPlaneVLLMService
 
     AVAILABLE = True
 except ImportError:
     AVAILABLE = False
     if not _IS_TEST_MODE:
         print("Warning: ControlPlaneVLLMService not available")
-        print("Please install: pip install isage-llm-core>=0.2.0\n")
+        print("Please install: pip install isagellm>=0.4.0\n")
 
 
 def demo_basic():
@@ -140,7 +140,7 @@ def demo_multi():
 
 def main():
     """Run all demos."""
-    print("\nSAGE vLLM Control Plane Tutorial")
+    print("\nsageLLM Control Plane Tutorial")
     print("=" * 60)
 
     for demo in [demo_basic, demo_multi]:
@@ -151,7 +151,7 @@ def main():
             break
 
     print("\n" + "=" * 60)
-    print("Complete! See vllm_control_plane_config_examples.md for details")
+    print("Complete! See sagellm_control_plane_config_examples.md for details")
 
 
 if __name__ == "__main__":

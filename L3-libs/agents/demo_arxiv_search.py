@@ -116,7 +116,7 @@ def example_mcp_integration():
     print("\n=== MCP Registry Integration Example ===")
 
     try:
-        from sage.libs.agentic.agents.action.mcp_registry import MCPRegistry
+        from sage_libs.sage_agentic.agents.action.mcp_registry import MCPRegistry
 
         # Create registry and register tool
         registry = MCPRegistry()

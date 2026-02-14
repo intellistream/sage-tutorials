@@ -25,7 +25,12 @@ import os
 from typing import TYPE_CHECKING, cast
 
 from sage.common.config.ports import SagePorts
-from sage.llm import UnifiedInferenceClient
+try:
+    from isagellm import UnifiedInferenceClient
+except ImportError:
+    # If isagellm not installed, use OpenAI client directly
+    import openai
+    UnifiedInferenceClient = None  # Will be checked in examples
 
 if TYPE_CHECKING:
     pass
