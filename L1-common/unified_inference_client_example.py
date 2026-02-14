@@ -4,18 +4,17 @@ UnifiedInferenceClient 完整使用示例
 本示例演示如何使用 SAGE 统一推理客户端进行 LLM 对话和 Embedding 向量化。
 
 Requirements:
-    pip install isage-llm-core>=0.2.0
+    pip install isagellm>=0.4.0
 
 Prerequisites:
-    1. 启动 Gateway: `sage gateway start`
-    2. 启动 LLM 引擎: `sage llm engine start Qwen/Qwen2.5-0.5B-Instruct`
-    3. 启动 Embedding 引擎: `sage llm engine start BAAI/bge-m3 --engine-kind embedding`
+    1. 启动 vLLM 引擎: python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen2.5-0.5B-Instruct --port 8001
+    2. 或安装 isagellm: pip install isagellm && sage llm engine start <model>
 
 Test Configuration:
     @test_category: tutorials
     @test_speed: quick
     @test_skip_ci: true
-    @test:skip - Requires Gateway and engines to be running
+    @test:skip - Requires vLLM or isagellm engines to be running
 """
 
 from __future__ import annotations

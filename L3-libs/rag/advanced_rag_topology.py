@@ -581,10 +581,11 @@ class LLMGenerator(MapFunction):
     def _init_client(self):
         """初始化 LLM 客户端"""
         try:
-            from sage.common.components.sage_llm import UnifiedInferenceClient
-
-            self._client = UnifiedInferenceClient.create()
-            self.logger.info("✓ 已初始化 UnifiedInferenceClient")
+            import openai
+            # UnifiedInferenceClient is in isagellm package
+            # For this tutorial, we use openai client directly
+            self._client = openai.OpenAI(base_url="http://localhost:8001/v1", api_key="dummy")
+            self.logger.info("✓ 已初始化 OpenAI client (vLLM compatible)")
         except Exception as e:
             self.logger.warning(f"无法初始化 LLM 客户端，使用模拟回答: {e}")
             self._client = None

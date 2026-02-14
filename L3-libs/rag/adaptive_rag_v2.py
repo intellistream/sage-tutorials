@@ -2,12 +2,15 @@
 """
 Adaptive RAG v2 - 自适应检索增强生成（保留旧版分流逻辑）
 
+⚠️ 注意: 本示例使用的 API 已过时，需要更新到新的 isagellm 包。
+当前状态: 待迁移
+
 核心特性：
 - 完全保留旧版 side_output 的分流逻辑
 - 使用 FlatMap + Filter 替代 side_output 实现分支
 - 向量库分支 vs Web 搜索分支独立处理
 - 使用新版 SAGE API：
-  - UnifiedInferenceClient (LLM + Embedding)
+  - OpenAI client (vLLM compatible) 或 isagellm UnifiedInferenceClient
   - MemoryManager (向量库管理)
   - EmbeddingFactory (本地 Embedding)
 
@@ -39,7 +42,9 @@ os.environ.pop("ALL_PROXY", None)
 import numpy as np
 from dotenv import load_dotenv
 
-from sage.common.components.sage_llm import EmbeddingClientAdapter, LLMClientAdapter
+# Use OpenAI client directly (vLLM provides OpenAI-compatible API)
+import openai
+
 from sage.common.core.functions.filter_function import FilterFunction
 from sage.common.core.functions.flatmap_function import FlatMapFunction
 from sage.common.core.functions.map_function import MapFunction

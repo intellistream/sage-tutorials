@@ -322,9 +322,10 @@ class ToolSelector(MapFunction):
     def _get_llm_client(self):
         if self._llm_client is None:
             try:
-                from sage.common.components.sage_llm import UnifiedInferenceClient
-
-                self._llm_client = UnifiedInferenceClient.create()
+                import openai
+                # UnifiedInferenceClient is in isagellm package
+                # For this tutorial, we use openai client directly
+                self._llm_client = openai.OpenAI(base_url="http://localhost:8001/v1", api_key="dummy")
             except Exception as e:
                 print(f"[ToolSelector] Warning: Could not create LLM client: {e}")
                 self._llm_client = None
