@@ -6,6 +6,12 @@
 - Tutorials that mention runtime, scheduling, or distributed execution should use Flownet-oriented guidance.
 - Do NOT add new `ray` imports/dependency instructions in tutorials.
 
+## 🚨 Installation Consistency (Cross-Repo)
+
+- 在 conda 环境中，**必须**使用 `python -m pip`，不要直接使用 `pip`。
+- 涉及 SAGE 主仓库能力时，先在 `SAGE/` 执行 `./quickstart.sh --dev --yes`。
+- SAGE quickstart 已显式安装核心独立 PyPI 依赖（如 `isagellm`、`isage-flownet`、`isage-vdb` 等），不要再建议通过 extras 手动补装核心依赖。
+
 ## Overview
 
 **sage-tutorials** is the official tutorial repository for the SAGE framework, containing hands-on examples organized by architecture layers (L1-L5).
@@ -63,10 +69,10 @@ Dependencies must be documented in README, not installed via commands in tutoria
 """
 Requirements:
     - isage-common>=0.2.0
-    - isage-llm-core>=0.2.0
+    - isagellm>=0.2.0
     - transformers>=4.52.0
 
-Install: pip install isage-common isage-llm-core transformers
+Install: python -m pip install isage-common isagellm transformers
 """
 ```
 
@@ -161,7 +167,7 @@ Each directory should have:
 ```python
 # If SAGE not installed, tutorials will fail with ImportError
 # This is INTENTIONAL - fail fast, don't hide the problem
-from sage.llm import UnifiedInferenceClient  # Requires isage-llm-core
+from sage.llm import UnifiedInferenceClient  # Requires isagellm
 ```
 
 ### Service Dependencies
