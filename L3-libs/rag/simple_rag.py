@@ -23,6 +23,7 @@ from sage.kernel.api.local_environment import LocalEnvironment
 from sage.kernel.api.flownet_environment import FlownetEnvironment
 from sage.kernel.scheduler.api import BaseScheduler
 from sage.kernel.scheduler.decision import PlacementDecision
+from sage.kernel.scheduler.node_selector import NodeSelector
 
 
 class SimpleQuestionSource(SourceFunction):
@@ -168,14 +169,14 @@ class LocalSinkScheduler(BaseScheduler):
     本地 Sink 调度器：将 Sink 节点放到客户端本地执行
 
     工作原理：
-    - Sink 节点 → 绑定到本地（使用实际的 Ray 节点 ID）
-    - 其他节点 → 使用 Ray 默认负载均衡
+    - Sink 节点 → 绑定到本地（使用当前运行时节点 ID）
+    - 其他节点 → 使用默认负载均衡
 
     使用场景：
     - FlownetEnvironment 分布式执行计算
     - 但希望 Sink 输出在本地可见
 
-    注意：需要在 Ray 集群环境中运行，会获取当前节点的真实 Ray node ID
+    注意：需要在分布式运行时环境中运行，会获取当前节点的真实 node ID
     """
 
     def __init__(self):
@@ -184,21 +185,19 @@ class LocalSinkScheduler(BaseScheduler):
         self._local_node_id = None  # 延迟获取
 
     def _get_local_node_id(self):
-        """获取当前节点的 Ray node ID"""
+        """获取当前节点的运行时 node ID"""
         if self._local_node_id is not None:
             return self._local_node_id
 
         try:
-            import ray
-
-            if not ray.is_initialized():
-                # 如果 Ray 没有初始化，返回 None 使用默认调度
-                return None
-
-            # 获取当前节点的 node ID
-            current_node_id = ray.get_runtime_context().get_node_id()
-            self._local_node_id = current_node_id
-            return current_node_id
+            selector = NodeSelector(cache_ttl=1.0, enable_tracking=False)
+            nodes = selector.get_all_nodes()
+            for node in nodes:
+                if node.hostname == self.local_hostname:
+                    self._local_node_id = node.node_id
+                    return node.node_id
+            # 如果未匹配到本机节点，返回 None 使用默认调度
+            return None
         except Exception:
             return None
 
@@ -212,11 +211,11 @@ class LocalSinkScheduler(BaseScheduler):
         is_sink = "Sink" in task_name or "sink" in task_name.lower()
 
         if is_sink:
-            # 获取本地节点的真实 Ray node ID
+            # 获取本地节点的真实运行时 node ID
             local_node_id = self._get_local_node_id()
 
             if local_node_id:
-                # 使用真实的 Ray node ID
+                # 使用真实的运行时 node ID
                 return PlacementDecision(
                     target_node=local_node_id,
                     placement_strategy="affinity",

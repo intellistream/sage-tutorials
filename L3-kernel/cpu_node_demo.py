@@ -354,12 +354,6 @@ def demo_cluster_inspection():
     print("  ✓ 集群总体状态\n")
 
     try:
-        import ray
-
-        if not ray.is_initialized():
-            print("⚠️  Ray 未初始化，跳过集群检查")
-            return
-
         # 创建节点选择器
         node_selector = NodeSelector()
 
@@ -405,8 +399,6 @@ def demo_cluster_inspection():
         print("\n✅ 示例4完成!")
         print("=" * 70)
 
-    except ImportError:
-        print("⚠️  Ray 未安装，无法进行集群检查")
     except Exception as e:
         print(f"⚠️  集群检查失败: {e}")
 

@@ -40,7 +40,7 @@ class SimpleProcessor(MapFunction):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        import socket as _socket  # 在类内部导入，确保 Ray Actor 可以访问
+        import socket as _socket  # 在类内部导入，确保远程 worker 反序列化可访问
 
         self.hostname = _socket.gethostname()
         self.processed_count = 0
@@ -258,7 +258,7 @@ def main():
         """
 ⚠️  注意事项：
   1. 运行前需要启动 JobManager daemon: sage jobmanager start
-  2. 确保 Ray 集群已启动: sage cluster start
+    2. 确保 Flownet 集群已启动: sage cluster start
   3. 如果连接失败，请检查 daemon 和集群状态
 
 📋 分布式调度配置：
