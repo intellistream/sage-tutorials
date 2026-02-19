@@ -11,6 +11,7 @@
 - 在 conda 环境中，**必须**使用 `python -m pip`，不要直接使用 `pip`。
 - 涉及 SAGE 主仓库能力时，先在 `SAGE/` 执行 `./quickstart.sh --dev --yes`。
 - SAGE quickstart 已显式安装核心独立 PyPI 依赖（如 `isagellm`、`isage-flownet`、`isage-vdb` 等），不要再建议通过 extras 手动补装核心依赖。
+- `git push` 前必须确认本仓库 `pre-push` hooks 行为；部分仓库会在 push 时自动更新版本号并触发 PyPI/TestPyPI 发布。
 
 ## Overview
 
