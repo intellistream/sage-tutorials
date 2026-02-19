@@ -1,5 +1,11 @@
 # SAGE Tutorials Copilot Instructions
 
+## 🚨 Runtime Direction (Cross-Repo)
+
+- `sageFlownet` is the runtime component that replaces `Ray` in the SAGE ecosystem.
+- Tutorials that mention runtime, scheduling, or distributed execution should use Flownet-oriented guidance.
+- Do NOT add new `ray` imports/dependency instructions in tutorials.
+
 ## Overview
 
 **sage-tutorials** is the official tutorial repository for the SAGE framework, containing hands-on examples organized by architecture layers (L1-L5).

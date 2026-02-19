@@ -95,13 +95,13 @@ Query refinement configuration.
 
 - `rag/qa_refiner.py`
 
-#### `config_ray.yaml`
+#### `config.yaml`
 
-Ray-distributed RAG pipeline.
+Unified tutorial configuration (local + Flownet-aligned runtime options).
 
 **Used by:**
 
-- `rag/qa_dense_retrieval_ray.py`
+- Tutorial examples that load shared config from `config/config.yaml`
 
 #### `config_hf.yaml`
 
