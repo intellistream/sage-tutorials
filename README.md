@@ -118,6 +118,7 @@ cd L4-middleware/sage_tsdb && python basic_dag_example.py
 
 # L3: 高级特性
 cd L3-kernel/advanced && python hello_future_world.py
+cd L3-kernel/advanced && python runtime_api_layering_advanced.py
 cd L3-kernel/advanced/fault_tolerance && python fault_tolerance.py
 
 # L3: 完整 RAG 系统
@@ -127,7 +128,7 @@ cd L3-libs/rag && python usage_4_complete_rag.py
 # （待添加完整应用示例）
 ```
 
-**学习目标**：深入理解容错机制、异步处理、生产级系统设计
+**学习目标**：深入理解容错机制、异步处理、Runtime API 分层、生产级系统设计
 
 ## �� 各层级详细说明
 

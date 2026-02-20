@@ -12,6 +12,11 @@
 - 函数系统 (Functions)
 - 运行时环境 (Runtime)
 
+运行时 API 学习建议：
+
+- 默认路径（推荐）：`sage.kernel.facade` (`create/submit/run/call`)
+- 高级路径（专家）：`LocalEnvironment` / `FlownetEnvironment`
+
 ## 📚 目录结构
 
 ```
@@ -66,6 +71,7 @@ L3-kernel/
 
 - `hello_future_world.py` - Future 异步处理
 - `hello_realistic_service_example.py` - 实际服务示例
+- `runtime_api_layering_advanced.py` - Facade 与 Local/FlownetEnvironment 双轨对照
 - `fault_tolerance/` - 容错和检查点
 
 ## 🎯 学习目标
