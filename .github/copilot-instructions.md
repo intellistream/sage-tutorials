@@ -7,6 +7,7 @@
 ## Critical rules
 - Flownet-first ecosystem direction; do not add new `ray` dependencies/imports.
 - Tutorials depend on SAGE install; when needed, use SAGE `./quickstart.sh --dev --yes` first.
+- Do not create new local virtual environments (`venv`/`.venv`); use the existing configured Python environment.
 - In conda environments, use `python -m pip`.
 - No fallback logic in tutorial code; fail fast with clear errors.
 - Do not embed manual one-off package installs in tutorial code cells/scripts.
