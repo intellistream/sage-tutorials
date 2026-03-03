@@ -213,13 +213,10 @@ class EmbeddingOperator(MapFunction):
     def _init_embedder(self):
         """初始化嵌入模型"""
         try:
-            from sage.common.components.sage_embedding import EmbeddingFactory
+            from sagellm.embedding import EmbeddingFactory
 
-            self._embedder = EmbeddingFactory.create(
-                "hf",
-                model="BAAI/bge-small-zh-v1.5",
-            )
-            self.logger.info("✓ 已加载 HuggingFace Embedding 模型")
+            self._embedder = EmbeddingFactory.create("hash", dim=self.dim)
+            self.logger.info("✓ 已加载 Hash Embedding 模型")
         except Exception as e:
             self.logger.warning(f"无法加载 Embedding 模型，使用模拟: {e}")
             self._embedder = None

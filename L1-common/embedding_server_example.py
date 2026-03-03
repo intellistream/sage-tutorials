@@ -2,7 +2,7 @@
 Embedding Server 使用示例
 
 这个示例展示如何使用本地 embedding 服务器，
-无需修改任何原有代码，直接通过 apply_embedding_model 调用。
+无需修改任何原有代码，直接通过 get_embedding_model 调用。
 
 Requirements:
     pip install isage-common>=0.2.0
@@ -16,7 +16,7 @@ Test Configuration:
 
 import os
 
-from sage.common.components.sage_embedding.embedding_api import apply_embedding_model
+from sagellm.embedding import get_embedding_model
 from sage.common.config.ports import SagePorts
 
 # Check test mode
@@ -28,6 +28,16 @@ _IS_TEST_MODE = (
 
 # Use SagePorts for embedding port configuration
 EMBEDDING_PORT = SagePorts.EMBEDDING_SECONDARY  # 8091
+
+
+def _create_openai_embedder(base_url: str, model: str):
+    normalized_base_url = base_url[:-3] if base_url.endswith("/v1") else base_url
+    return get_embedding_model(
+        "openai",
+        model=model,
+        base_url=normalized_base_url,
+        api_key="dummy",
+    )
 
 
 def example_basic_usage():
@@ -45,11 +55,9 @@ def example_basic_usage():
         return
 
     # 创建 embedding 模型实例（连接到本地服务器）
-    embedding_model = apply_embedding_model(
-        name="openai",  # 使用 openai 方法（兼容 OpenAI API）
-        model="BAAI/bge-m3",  # 模型名称（任意，服务器会忽略）
-        base_url=f"http://localhost:{EMBEDDING_PORT}/v1",  # 本地服务器地址
-        api_key="dummy",  # 本地服务不需要真实的 API key
+    embedding_model = _create_openai_embedder(
+        base_url=f"http://localhost:{EMBEDDING_PORT}",
+        model="BAAI/bge-m3",
     )
 
     # 测试 embedding
@@ -82,11 +90,9 @@ def example_batch_processing():
         print("  Skipping actual server connection")
         return
 
-    embedding_model = apply_embedding_model(
-        name="openai",
+    embedding_model = _create_openai_embedder(
+        base_url=f"http://localhost:{EMBEDDING_PORT}",
         model="BAAI/bge-m3",
-        base_url=f"http://localhost:{EMBEDDING_PORT}/v1",
-        api_key="dummy",
     )
 
     print(f"\nProcessing {len(texts)} texts...")
@@ -110,11 +116,9 @@ def example_with_different_server():
         return
 
     # 假设你在端口 8081 运行另一个模型
-    embedding_model = apply_embedding_model(
-        name="openai",
+    embedding_model = _create_openai_embedder(
+        base_url="http://localhost:8081",
         model="custom-model",
-        base_url="http://localhost:8081/v1",  # 不同端口
-        api_key="dummy",
     )
 
     text = "Testing with different server port"
@@ -139,11 +143,9 @@ def example_error_handling():
         print("  Skipping actual server connection")
         return
 
-    embedding_model = apply_embedding_model(
-        name="openai",
+    embedding_model = _create_openai_embedder(
+        base_url=f"http://localhost:{EMBEDDING_PORT}",
         model="BAAI/bge-m3",
-        base_url=f"http://localhost:{EMBEDDING_PORT}/v1",
-        api_key="dummy",
     )
 
     # 测试空文本
@@ -187,15 +189,9 @@ def main():
     print("Embedding Server 使用示例")
     print("=" * 60)
     print("\n请确保 embedding 服务器已启动:")
-    print(
-        "  bash packages/sage-common/src/sage/common/components/sage_embedding/start_embedding_server.sh"
-        f" {EMBEDDING_PORT}"
-    )
+    print(f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}")
     print("\n或手动启动:")
-    print(
-        "  python packages/sage-common/src/sage/common/components/sage_embedding/embedding_server.py"
-        f" --model BAAI/bge-m3 --port {EMBEDDING_PORT}"
-    )
+    print(f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}")
     print("\n" + "=" * 60 + "\n")
 
     try:
@@ -213,8 +209,7 @@ def main():
         print(f"\n错误: {e}")
         print("\n请确保 embedding 服务器正在运行:")
         print(
-            "  bash packages/sage-common/src/sage/common/components/sage_embedding/start_embedding_server.sh"
-            f" {EMBEDDING_PORT}"
+            f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}"
         )
 
 

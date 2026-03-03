@@ -36,7 +36,7 @@ for path in PACKAGE_SRC_ROOTS:
 
 
 try:
-    from sage.common.components.sage_embedding.embedding_model import EmbeddingModel
+    from sagellm.embedding import get_embedding_model
     from sage.middleware.components.sage_db.python.micro_service.sage_db_service import (
         SageDBService,
     )
@@ -47,6 +47,22 @@ except ImportError as exc:  # pragma: no cover - surface build guidance early
             "   sage extensions install sage_db  # add --force to rebuild"
         ) from exc
     raise
+
+
+class EmbeddingModel:
+    def __init__(self, method: str = "hash", model: str = "", fixed_dim: int = 128, **kwargs: Any):
+        if method == "mockembedder":
+            self._embedder = get_embedding_model("mockembedder", fixed_dim=fixed_dim)
+        elif method == "hash":
+            self._embedder = get_embedding_model("hash", dim=fixed_dim)
+        else:
+            self._embedder = get_embedding_model(method, model=model, **kwargs)
+
+    def embed(self, text: str) -> list[float]:
+        return self._embedder.embed(text)
+
+    def get_dim(self) -> int:
+        return int(self._embedder.get_dim())
 
 SERVICE_NAME = "vector_store_service"
 
