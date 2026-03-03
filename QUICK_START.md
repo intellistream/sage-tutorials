@@ -7,7 +7,7 @@
 ### 1. 运行第一个示例
 
 ```bash
-cd /path/to/SAGE/examples/tutorials
+cd /path/to/sage-tutorials
 python L1-common/hello_world.py
 ```
 
@@ -219,6 +219,8 @@ ______________________________________________________________________
 
 - **快速参考**：`L3-libs/unlearning/docs/QUICK_REFERENCE.md`
 - **故障排除**：`L3-libs/unlearning/docs/TROUBLESHOOTING.md`
+- **边界约束**：`docs/BOUNDARY.md`
+- **可复现检查**：`docs/REPRODUCIBILITY_CHECKLIST.md`
 - **学习路径**：`docs/LEARNING_PATH.md`（即将推出）
 
 ### 层级文档

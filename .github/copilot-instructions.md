@@ -19,3 +19,17 @@
 
 ## High-signal paths
 - `L1-common/` to `L5-apps/`, `config/`, root `README.md`, `QUICK_START.md`.
+
+## Polyrepo coordination (mandatory)
+
+- This repository is an independent SAGE sub-repository and is developed/released independently.
+- Do not assume sibling source directories exist locally in `intellistream/SAGE`.
+- For cross-repo rollout, publish this repo/package first, then bump the version pin in `SAGE/packages/sage/pyproject.toml` when applicable.
+- Do not add local editable installs of other SAGE sub-packages in setup scripts or docs.
+
+## 🚫 NEVER_CREATE_DOT_VENV_MANDATORY
+
+- 永远不要创建 `.venv` 或 `venv`（无任何例外）。
+- NEVER create `.venv`/`venv` in this repository under any circumstance.
+- 必须复用当前已配置的非-venv Python 环境（如现有 conda 环境）。
+- If any script/task suggests creating a virtualenv, skip that step and continue with the existing environment.
