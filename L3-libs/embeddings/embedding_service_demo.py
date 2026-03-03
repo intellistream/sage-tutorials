@@ -1,8 +1,8 @@
 """
-Embedding Service Demo - 展示如何使用统一的 EmbeddingService
+Embedding Service Demo - 展示如何使用统一的 Embedding 能力
 
 这个示例展示了:
-1. 如何配置 EmbeddingService (本地模型, API, vLLM)
+1. 如何配置 Embedding (本地 hash/mock 或远端 OpenAI-compatible)
 2. 如何在 Pipeline 中使用 embedding service
 3. 如何实现高性能批处理
 4. 如何使用缓存优化性能
@@ -15,56 +15,57 @@ import os
 
 
 def demo_basic_embedding_service():
-    """示例 1: 基本的 Embedding Service 使用"""
+    """示例 1: 基本的 Embedding 使用"""
     print("\n" + "=" * 60)
-    print("示例 1: 基本 Embedding Service")
+    print("示例 1: 基本 Embedding")
     print("=" * 60)
 
-    from sage.common.components.sage_embedding import EmbeddingService
+    from sagellm.embedding import EmbeddingFactory
 
     # 检查是否在测试模式
     is_test_mode = os.getenv("SAGE_TEST_MODE") == "true" or os.getenv("CI") == "true"
 
-    # 配置: 在测试模式使用 mock，否则使用 HuggingFace 模型
+    # 配置: 在测试模式使用 mock，否则使用 hash（本地稳定）
     if is_test_mode:
         config = {
             "method": "mockembedder",
-            "dimension": 384,  # 模拟 bge-small-zh-v1.5 的维度
-            "batch_size": 32,
+            "dimension": 384,
             "normalize": True,
-            "cache_enabled": True,
-            "cache_size": 1000,
         }
     else:
         config = {
-            "method": "hf",
+            "method": "hash",
             "model": "BAAI/bge-small-zh-v1.5",
-            "batch_size": 32,
             "normalize": True,
-            "cache_enabled": True,
-            "cache_size": 1000,
         }
 
-    service = EmbeddingService(config)
-    service.setup()
+    embedder = EmbeddingFactory.create(
+        config["method"],
+        model=config.get("model"),
+        fixed_dim=config.get("dimension", 384),
+        dim=config.get("dimension", 384),
+        normalize=config.get("normalize", True),
+    )
 
     # 获取服务信息
-    info = service.process({"task": "info"})
+    info = {
+        "method": config["method"],
+        "model": config.get("model", "(built-in)"),
+        "dimension": int(embedder.get_dim()) if hasattr(embedder, "get_dim") else "dynamic",
+        "normalize": bool(config.get("normalize", True)),
+    }
     print("\n服务信息:")
     print(f"  方法: {info['method']}")
     print(f"  模型: {info['model']}")
     print(f"  维度: {info['dimension']}")
-    print(f"  缓存: {info['cache_enabled']}")
+    print(f"  归一化: {info['normalize']}")
 
     # 单个文本 embedding
-    result = service.process(
-        {"task": "embed", "inputs": "你好世界", "options": {"return_stats": True}}
-    )
+    vector = embedder.embed("你好世界")
 
     print("\n单个文本 embedding:")
-    print(f"  维度: {result['dimension']}")
-    print(f"  向量前5个值: {result['vectors'][0][:5]}")
-    print(f"  统计: {result['stats']}")
+    print(f"  维度: {len(vector)}")
+    print(f"  向量前5个值: {vector[:5]}")
 
     # 批量文本 embedding
     texts = [
@@ -74,27 +75,18 @@ def demo_basic_embedding_service():
         "自然语言处理很重要",
     ]
 
-    result = service.process({"task": "embed", "inputs": texts, "options": {"return_stats": True}})
+    vectors = embedder.embed_batch(texts) if hasattr(embedder, "embed_batch") else [embedder.embed(t) for t in texts]
 
     print("\n批量文本 embedding:")
-    print(f"  文本数量: {result['count']}")
-    print(f"  计算数量: {result['stats']['computed']}")
-    print(f"  缓存数量: {result['stats']['cached']}")
+    print(f"  文本数量: {len(vectors)}")
+    print(f"  每个向量维度: {len(vectors[0]) if vectors else 0}")
 
     # 再次查询相同文本 (测试缓存)
-    result2 = service.process(
-        {
-            "task": "embed",
-            "inputs": texts[:2],  # 重复前两个文本
-            "options": {"return_stats": True},
-        }
-    )
+    vectors2 = embedder.embed_batch(texts[:2]) if hasattr(embedder, "embed_batch") else [embedder.embed(t) for t in texts[:2]]
 
     print("\n缓存测试:")
-    print(f"  缓存命中: {result2['stats']['cached']}/{result2['count']}")
-    print(f"  命中率: {result2['stats']['cache_hit_rate']:.2%}")
-
-    service.cleanup()
+    print(f"  重复批量数量: {len(vectors2)}")
+    print("  缓存命中率: 由具体实现决定")
 
 
 def demo_vllm_embedding_service():
@@ -117,8 +109,8 @@ services:
         tensor_parallel_size: 1
         gpu_memory_utilization: 0.9
 
-  embedding:
-    class: sage.common.components.sage_embedding.EmbeddingService
+    embedding:
+        class: sagellm.embedding.EmbeddingService
     config:
       method: "vllm"
       vllm_service_name: "vllm"
@@ -154,7 +146,7 @@ def demo_multi_embedding_pipeline():
 services:
   # 1. 快速本地 embedding (用于实时查询)
   embedding_fast:
-    class: sage.common.components.sage_embedding.EmbeddingService
+        class: sagellm.embedding.EmbeddingService
     config:
       method: "hf"
       model: "BAAI/bge-small-zh-v1.5"  # 小模型, 快速
@@ -163,7 +155,7 @@ services:
 
   # 2. 高质量云端 embedding (用于离线索引)
   embedding_quality:
-    class: sage.common.components.sage_embedding.EmbeddingService
+        class: sagellm.embedding.EmbeddingService
     config:
       method: "openai"
       model: "text-embedding-3-large"
@@ -177,7 +169,7 @@ services:
       model_id: "BAAI/bge-large-en-v1.5"
 
   embedding_batch:
-    class: sage.common.components.sage_embedding.EmbeddingService
+        class: sagellm.embedding.EmbeddingService
     config:
       method: "vllm"
       vllm_service_name: "vllm"

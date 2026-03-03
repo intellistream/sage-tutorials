@@ -468,23 +468,18 @@ def print_usage_guide():
     print("   或者手动启动:")
     print("   $ python -m sage.kernel.runtime.job_manager --host 127.0.0.1 --port 19001")
 
-    print("\n2️⃣  启动Ray集群 (可选，JobManager会自动初始化):")
-    print("   $ ray start --head  # 启动头节点")
-    print("   $ ray start --address=<head_address>  # 添加CPU工作节点")
+    print("\n2️⃣  启动 Flownet 集群工作节点 (可选，多节点部署):")
+    print("   $ sage cluster start  # 启动集群")
+    print("   $ sage cluster status  # 查看集群状态")
 
-    print("\n3️⃣  配置CPU工作节点:")
-    print("   # 在工作节点机器上")
-    print("   $ ray start --address=<head_address> --num-cpus=8 --num-gpus=0")
-    print("   # 指定只有CPU资源，不分配GPU")
-
-    print("\n4️⃣  检查集群状态:")
+    print("\n3️⃣  检查集群状态:")
     print("   $ sage jobmanager status")
-    print("   $ ray status")
+    print("   $ sage cluster status")
 
-    print("\n5️⃣  运行CPU任务:")
+    print("\n4️⃣  运行CPU任务:")
     print("   $ python cpu_node_demo.py")
 
-    print("\n6️⃣  查看日志:")
+    print("\n5️⃣  查看日志:")
     print("   $ ls -la .sage/logs/jobmanager/")
     print("   $ tail -f .sage/logs/jobmanager/session_*/jobmanager.log")
 
@@ -573,7 +568,7 @@ def main():
         traceback.print_exc()
         print("\n💡 提示:")
         print("  1. 确保JobManager已启动: sage jobmanager start")
-        print("  2. 检查Ray是否运行: ray status")
+        print("  2. 检查集群状态: sage cluster status")
         print("  3. 查看日志: .sage/logs/jobmanager/")
 
 

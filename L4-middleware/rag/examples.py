@@ -3,7 +3,7 @@ SAGE RAG - Usage Examples
 
 This file demonstrates how to use the SAGE RAG (Retrieval-Augmented Generation) toolkit.
 
-Layer: L3 (Core - Algorithm Library)
+Layer: L4 (Middleware - Operators and Service Integration)
 
 ⚠️ NOTE: 这些示例优先展示 API 设计。`sage.libs.rag.*` 已提供核心组件，
 但部分高级算子仍位于 middleware 层。

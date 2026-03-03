@@ -7,7 +7,7 @@ SAGE Embedding 方法演示
 @test:allow-demo
 """
 
-from sage.common.components.sage_embedding import (
+from sagellm.embedding import (
     check_model_availability,
     get_embedding_model,
     list_embedding_models,
