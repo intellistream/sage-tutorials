@@ -1,6 +1,6 @@
 # 🚀 SAGE Tutorials
 
-欢迎来到 SAGE Tutorials！这里包含了按照 SAGE 架构分层组织的完整示例和文档。
+欢迎来到 SAGE Tutorials！这里包含了按照 SAGE 学习分层组织的示例和文档。
 
 > **从基础到应用：循序渐进地掌握 SAGE 框架**
 
@@ -14,31 +14,31 @@ python L1-common/hello_world.py
 cat QUICK_START.md
 ```
 
-## 📐 SAGE 5 层架构概览
+## 📐 SAGE 学习分层概览
 
-SAGE 采用 **5 层分层架构**，从底层基础设施到顶层应用：
+当前 SAGE 已收敛到单一主仓 `isage`，教程仍按 **5 个学习层级** 组织内容，帮助读者从 foundation → stream/runtime → app 逐步理解：
 
-```
+```text
 ┌─────────────────────────────────────────────┐
 │ L5: Apps (应用层)                           │
-│ sage-apps, sage-benchmark                  │
-│ 完整应用 + 性能测试                         │
+│ 应用示例 + benchmark / studio 生态入口      │
+│ 完整应用 + 端到端场景                        │
 ├─────────────────────────────────────────────┤
 │ L4: Middleware (中间件层)                   │
-│ sage-middleware                            │
-│ 领域算子 + 中间件组件                       │
+│ 教学层：服务接入 / 适配器 / 迁移说明         │
+│ 领域算子 + 外部能力接入模式                  │
 ├─────────────────────────────────────────────┤
 │ L3: Core (核心层)                           │
-│ sage-kernel + sage-libs                   │
-│ 执行引擎 + 算法库                           │
+│ isage: sage.stream + sage.runtime          │
+│ 执行引擎 + 算法/检索编排                     │
 ├─────────────────────────────────────────────┤
 │ L2: Platform (平台层)                       │
-│ sage-platform                              │
-│ 队列 + 存储 + 服务抽象                      │
+│ 已并入主仓 foundation/runtime               │
+│ 环境、调度、服务抽象                         │
 ├─────────────────────────────────────────────┤
 │ L1: Foundation (基础层)                     │
-│ sage-common                                │
-│ 配置 + 日志 + 工具                          │
+│ isage: sage.foundation                      │
+│ 配置 + 日志 + 工具                           │
 └─────────────────────────────────────────────┘
 ```
 
@@ -48,9 +48,15 @@ SAGE 采用 **5 层分层架构**，从底层基础设施到顶层应用：
 - ❌ **禁止反向**：禁止向上或循环依赖
 - 📚 **详细说明**：[SAGE 包架构文档](https://intellistream.github.io/SAGE-Pub/concepts/architecture/package-structure/)
 
+**当前依赖模型**：
+
+- 核心主仓：`isage>=0.3.0`
+- 外部推理引擎：`isagellm` / `sagellm`
+- 可选能力适配器：如 `isage-rag`、`isage-neuromem`
+
 ## 📚 Tutorial 目录结构
 
-```
+```text
 tutorials/
 │
 ├── QUICK_START.md         # 5 分钟快速指南
@@ -107,15 +113,14 @@ cd L3-kernel/operators && python hello_comap_world.py
 ```bash
 # 完成初学者路径后
 
-# L3: 算法库
+# L3: 算法与检索编排
 cd L3-libs/rag && python simple_rag.py
 cd L3-libs/agents && python basic_agent.py
 
-# L4: 中间件服务
+# L4: 服务/适配器接入
 cd L4-middleware && python hello_service_world.py
-cd L4-middleware/memory_service && python rag_memory_service.py
 
-# L4: 数据服务
+# L4: 数据服务与迁移说明
 cd L4-middleware/sage_db && python workflow_demo.py
 cd L4-middleware/sage_tsdb && python basic_dag_example.py
 ```
@@ -134,7 +139,7 @@ cd L3-kernel/advanced && python hello_future_world.py
 cd L3-kernel/advanced && python runtime_api_layering_advanced.py
 cd L3-kernel/advanced/fault_tolerance && python fault_tolerance.py
 
-# L3: 完整 RAG 系统
+# L3: 完整 RAG 系统（迁移说明）
 cd L3-libs/rag && python usage_4_complete_rag.py
 
 # L5: 应用集成
@@ -147,7 +152,7 @@ cd L3-libs/rag && python usage_4_complete_rag.py
 
 ### L1: Common - 基础层
 
-**对应包**：`sage-common`
+**当前对应 surface**：`isage` → `sage.foundation`
 
 **内容**：
 
@@ -163,7 +168,7 @@ ______________________________________________________________________
 
 ### L2: Platform - 平台服务层
 
-**对应包**：`sage-platform`
+**当前对应 surface**：`isage` → `sage.runtime`
 
 **内容**：
 
@@ -179,7 +184,7 @@ ______________________________________________________________________
 
 ### L3: Kernel - 核心引擎层
 
-**对应包**：`sage-kernel`
+**当前对应 surface**：`isage` → `sage.stream` / `sage.runtime`
 
 **内容**：
 
@@ -197,11 +202,11 @@ ______________________________________________________________________
 
 ### L3: Libs - 算法库层
 
-**对应包**：`sage-libs`
+**当前对应 surface**：`isage` + 可选适配器（如 `isagellm` / `isage-rag`）
 
 **内容**：
 
-- `rag/` - RAG 应用示例（7 个）
+- `rag/` - RAG 应用示例（含迁移说明）
 - `agents/` - 智能体示例（5 个）
 - `embeddings/` - 嵌入示例（4 个）
 - `llm/` - LLM 集成示例（2 个）
@@ -215,14 +220,14 @@ ______________________________________________________________________
 
 ### L4: Middleware - 中间件层
 
-**对应包**：`sage-middleware`
+**当前对应 surface**：主仓服务接入模式 + 外部适配器 / 迁移说明
 
 **内容**：
 
 - `hello_service_world.py` - 服务入门
 - `memory_service/` - 内存管理（3 个）
-- `sage_db/` - 向量数据库（4 个）
-- `sage_flow/` - 流数据服务（3 个）
+- `sage_db/` - 向量数据库（含迁移说明）
+- `sage_flow/` - 流数据服务（含迁移说明）
 - `sage_tsdb/` - 时序数据库（3 个）
 
 **Python 文件数**：13
@@ -233,7 +238,7 @@ ______________________________________________________________________
 
 ### L5: Apps - 应用层
 
-**对应包**：`sage-apps`, `sage-benchmark`
+**当前对应 surface**：`isage` 上层应用生态（如 benchmark / examples / studio）
 
 **内容**：
 
@@ -247,15 +252,15 @@ ______________________________________________________________________
 
 ## 📊 示例统计
 
-| 层级     | 对应包                            | Python 文件 | 主要内容     |
-| -------- | --------------------------------- | ----------- | ------------ |
-| L1       | sage-common                       | 1           | 基础工具     |
-| L2       | sage-platform                     | 2           | 平台服务     |
-| L3       | sage-kernel                       | 31          | 流处理引擎   |
-| L3       | sage-libs                         | 23          | 算法库       |
-| L4       | sage-middleware                   | 13          | 数据服务     |
-| L5       | sage-apps, sage-benchmark         | 0           | 待添加       |
-| **总计** | -                                 | **70**      | **5 层架构** |
+| 层级     | 当前依赖面                                | Python 文件 | 主要内容           |
+| -------- | ----------------------------------------- | ----------- | ------------------ |
+| L1       | `isage` / `sage.foundation`               | 1           | 基础工具           |
+| L2       | `isage` / `sage.runtime`                  | 2           | 环境与平台抽象     |
+| L3       | `isage` / `sage.stream` + `sage.runtime`  | 31          | 流处理与执行引擎   |
+| L3       | `isage` + 可选适配器                      | 23          | 算法库 / RAG / LLM |
+| L4       | 主仓接入模式 + 外部适配器 / 迁移说明      | 13          | 数据服务与迁移     |
+| L5       | `isage` 上层生态                          | 0           | 待添加             |
+| **总计** | -                                         | **70**      | **5 层学习结构**   |
 
 ## 📖 补充文档
 
@@ -265,7 +270,7 @@ ______________________________________________________________________
 
 ## 🔍 如何选择示例
 
-### 我想学习...
+### 我想学习
 
 - **基础概念** → 从 `hello_world.py` 开始
 - **流处理** → `L3-kernel/stream/`
@@ -275,7 +280,7 @@ ______________________________________________________________________
 - **数据服务** → `L4-middleware/`
 - **容错机制** → `L3-kernel/advanced/fault_tolerance/`
 
-### 我想构建...
+### 我想构建
 
 - **简单脚本** → `L3-libs/rag/usage_1_direct_library.py`
 - **数据管道** → `L3-kernel/` 中的示例
@@ -330,6 +335,6 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-**开始探索 SAGE 吧！🎉**
+## 开始探索 SAGE 吧！🎉
 
 有任何问题或建议，欢迎提 Issue 或 PR！

@@ -16,7 +16,7 @@
 
 ```bash
 # 可选：确保 _sage_flow 扩展已构建
-# 构建目录通常在 packages/sage-middleware/src/sage/middleware/components/sage_flow/build/
+# 相关构建产物由当前已安装的适配器包提供
 ```
 
 运行应用方式：
@@ -33,6 +33,5 @@ python examples/service/sage_flow/hello_sage_flow_service.py
 
 ## 说明
 
-- Minimal 服务 `SageFlowService` 位于
-  `packages/sage-middleware/src/sage/middleware/components/sage_flow/micro_service/sage_flow_service.py`
+- Minimal 服务 `SageFlowService` 由独立适配器实现并接入主仓 runtime
 - 当前服务主要演示了数据注入与执行路径，后续可扩展 topk/itopk/index 等算子，将其对外暴露为 service API

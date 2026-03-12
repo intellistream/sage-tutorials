@@ -28,7 +28,7 @@ _IS_TEST_MODE = (
 )
 
 try:
-    from sage.common.config.ports import SagePorts
+    from sage.foundation import SagePorts
     from isagellm import ControlPlaneVLLMService
 
     AVAILABLE = True

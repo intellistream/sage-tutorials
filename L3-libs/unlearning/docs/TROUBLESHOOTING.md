@@ -8,7 +8,7 @@
 
 **症状:**
 
-```
+```text
 ModuleNotFoundError: No module named 'sage'
   File "usage_1_direct_library.py", line 5, in <module>
     from sage.libs.privacy.unlearning import UnlearningEngine
@@ -19,12 +19,12 @@ ModuleNotFoundError: No module named 'sage'
 **解决方案:**
 
 ```bash
-# 方法 1: 在 SAGE 根目录安装
+# 方法 1: 在 SAGE 主仓根目录安装
 cd /home/shuhao/SAGE
-pip install -e packages/sage-libs
+pip install -e .
 
-# 方法 2: 或者完整安装
-make install
+# 方法 2: 开发环境
+./quickstart.sh --dev --yes
 
 # 方法 3: 验证安装
 python -c "from sage.libs.privacy.unlearning import UnlearningEngine; print('OK')"
@@ -32,7 +32,7 @@ python -c "from sage.libs.privacy.unlearning import UnlearningEngine; print('OK'
 
 **预防:**
 
-- 始终在虚拟环境中工作
+- 始终使用已配置的非-venv Python 环境（如 conda）
 - 运行代码前检查依赖: `pip list | grep sage`
 
 ______________________________________________________________________
@@ -41,7 +41,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 ImportError: cannot import name 'BaseFunction' from 'sage.kernel'
 ```
 
@@ -54,17 +54,17 @@ ImportError: cannot import name 'BaseFunction' from 'sage.kernel'
 
 ```bash
 # 安装完整 SAGE
-pip install -e packages/sage-kernel
-pip install -e packages/sage-middleware
+cd /home/shuhao/SAGE
+pip install -e .
 
 # 验证
-python -c "from sage.kernel.api.function.base_function import BaseFunction; print('OK')"
+python -c "from sage.foundation import BaseFunction; print('OK')"
 ```
 
 **预防:**
 
 - usage_1 不需要 SAGE 运行时
-- usage_2-4 需要 `sage-kernel`
+- usage_2-4 需要主仓 `isage`，部分高级能力还需要外部适配器
 - 查看 README.md 的依赖清单
 
 ______________________________________________________________________
@@ -73,7 +73,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 ModuleNotFoundError: No module named 'neuromem'
   File "usage_3_memory_service.py", line 8
     from sage.middleware.components.sage_mem.neuromem import MemoryManager
@@ -84,8 +84,10 @@ ModuleNotFoundError: No module named 'neuromem'
 **解决方案:**
 
 ```bash
-# 安装中间件
-pip install -e packages/sage-middleware
+# 安装主仓与记忆适配器
+cd /home/shuhao/SAGE
+pip install -e .
+pip install isage-neuromem
 
 # 或单独安装向量库
 pip install faiss-cpu
@@ -109,7 +111,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 ValueError: shapes (100, 128) and (127, 128) not aligned
   at engine.unlearn_vectors()
 ```
@@ -145,7 +147,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 RuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB.
 ```
 
@@ -190,7 +192,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 ValueError: epsilon must be positive, got -1.0
 ```
 
@@ -221,7 +223,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 OverflowError: cannot convert float infinity to integer
   in privacy_accountant.compute_epsilon()
 ```
@@ -250,7 +252,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 RuntimeError: No active environment found.
 ```
 
@@ -276,7 +278,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 AttributeError: 'NoneType' object has no attribute 'execute'
 ```
 
@@ -304,7 +306,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 KeyError: 'collection_name'
   in service.forget_with_dp("collection_name", ...)
 ```
@@ -345,7 +347,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 # 处理 1000 个向量花费 > 1 分钟
 result = engine.unlearn_vectors(...)  # 卡住...
 ```
@@ -384,7 +386,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 # 内存使用超过预期
 # 处理 100k 向量时占用 > 20GB
 ```
@@ -434,7 +436,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 PrivacyBudgetError: Remaining budget (0.01) < required (0.1)
 ```
 
@@ -483,7 +485,7 @@ ______________________________________________________________________
 
 **症状:**
 
-```
+```text
 遗忘后的向量与原始向量仍然相似
 ```
 
@@ -650,6 +652,6 @@ logger.warning(f"Privacy budget: {remaining_budget}")
 
 ______________________________________________________________________
 
-**更新历史**
+## 更新历史
 
 - v1.0: 初始版本，涵盖常见错误和解决方案

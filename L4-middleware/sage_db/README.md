@@ -18,8 +18,9 @@ SAGE-DB (SageVDB) 已独立为 PyPI 包。如未安装，可运行：
 # 方式 1: 直接安装 SageVDB
 pip install isage-vdb
 
-# 方式 2: 通过 sage-middleware 完整依赖安装
-pip install isage-middleware[extensions]
+# 方式 2: 安装主仓 + 向量库适配器
+pip install isage>=0.3.0
+pip install isage-vdb
 ```
 
 ## 运行示例
@@ -38,7 +39,6 @@ python examples/service/sage_db/hello_sage_db_service.py
 
 ## 说明
 
-- Canonical Python API 位于
-  `packages/sage-middleware/src/sage/middleware/components/sage_db/python/sage_db.py`
-- 为保持仓库内运行便捷，示例脚本在未安装包时会自动将 `packages/*/src` 加入 `sys.path`
+- Canonical Python API 由独立适配器包 `isage-vdb` 提供
+- 当前建议通过显式安装依赖来运行示例，而不是依赖 `packages/*/src` 的本地路径注入
 - 若你需要对外暴露更丰富的接口，可在 `python/micro_service/sage_db_service.py` 基础上扩展（如批量删除、索引保存/加载、带条件过滤的查询等）

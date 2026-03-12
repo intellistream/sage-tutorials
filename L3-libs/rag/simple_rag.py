@@ -15,15 +15,14 @@ import time
 
 from dotenv import load_dotenv
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
-from sage.kernel.api.flownet_environment import FlownetEnvironment
-from sage.kernel.scheduler.api import BaseScheduler
-from sage.kernel.scheduler.decision import PlacementDecision
-from sage.kernel.scheduler.node_selector import NodeSelector
+from sage.foundation import CustomLogger, MapFunction, SinkFunction, SourceFunction
+from sage.runtime import (
+    BaseScheduler,
+    FluttyEnvironment,
+    LocalEnvironment,
+    NodeSelector,
+    PlacementDecision,
+)
 
 
 class SimpleQuestionSource(SourceFunction):
@@ -131,7 +130,9 @@ class SimpleTerminalSink(SinkFunction):
 class SimpleFileSink(SinkFunction):
     """文件输出 - 结果写入文件，便于远程执行后查看"""
 
-    def __init__(self, output_path: str = "/home/sage/SAGE/.sage/rag_output.txt", **kwargs):
+    def __init__(
+        self, output_path: str = "/home/sage/SAGE/.sage/rag_output.txt", **kwargs
+    ):
         super().__init__(**kwargs)
         self.output_path = output_path
 
@@ -190,7 +191,7 @@ class LocalSinkScheduler(BaseScheduler):
             return self._local_node_id
 
         try:
-            selector = NodeSelector(cache_ttl=1.0, enable_tracking=False)
+            selector = NodeSelector(enable_tracking=False)
             nodes = selector.get_all_nodes()
             for node in nodes:
                 if node.hostname == self.local_hostname:
@@ -218,19 +219,16 @@ class LocalSinkScheduler(BaseScheduler):
                 # 使用真实的运行时 node ID
                 return PlacementDecision(
                     target_node=local_node_id,
-                    placement_strategy="affinity",
                     reason=f"Sink bound to local node: {self.local_hostname} (node_id: {local_node_id[:8]}...)",
                 )
             else:
                 # 如果无法获取 node ID，使用默认调度
                 return PlacementDecision(
-                    placement_strategy="default",
                     reason="Sink: Could not get local node ID, using default scheduling",
                 )
 
         # 其他任务使用默认调度
         return PlacementDecision(
-            placement_strategy="default",
             reason="Default load balancing for compute tasks",
         )
 
@@ -242,16 +240,17 @@ def pipeline_run():
     print("=" * 60)
 
     # 选择环境模式
-    USE_REMOTE = True  # 设为 True 使用远程模式（需要先启动 JobManager）
+    USE_REMOTE = True  # 设为 True 使用远程模式（需要先准备外部分布式运行时）
 
     if USE_REMOTE:
-        # 远程模式：需要先启动 JobManager
-        # 运行: sage jobmanager start --host 0.0.0.0 --port 19001
+        # 远程模式：需要先准备外部 Flutty / JobManager-compatible 运行时
+        # 检查: sage runtime nodes
         scheduler = LocalSinkScheduler()
-        print(f"📍 使用 LocalSinkScheduler，Sink 将在本地节点 ({scheduler.local_hostname}) 执行")
-        env = FlownetEnvironment(
+        print(
+            f"📍 使用 LocalSinkScheduler，Sink 将在本地节点 ({scheduler.local_hostname}) 执行"
+        )
+        env = FluttyEnvironment(
             "rag_simple_demo",
-            host="sage-node-1",
             scheduler=scheduler,
         )
     else:
@@ -294,7 +293,10 @@ def pipeline_run():
 
 if __name__ == "__main__":
     # 检查是否在测试模式下运行
-    if os.getenv("SAGE_EXAMPLES_MODE") == "test" or os.getenv("SAGE_TEST_MODE") == "true":
+    if (
+        os.getenv("SAGE_EXAMPLES_MODE") == "test"
+        or os.getenv("SAGE_TEST_MODE") == "true"
+    ):
         print("🧪 Test mode detected - rag_simple example")
         print("✅ Test passed: Example structure validated")
         sys.exit(0)

@@ -1,8 +1,7 @@
 import time
 
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment
 
 
 # 简单的数字源

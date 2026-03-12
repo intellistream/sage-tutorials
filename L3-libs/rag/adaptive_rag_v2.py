@@ -43,25 +43,20 @@ import numpy as np
 from dotenv import load_dotenv
 
 # Use OpenAI client directly (vLLM provides OpenAI-compatible API)
-import openai
 
-from sage.common.core.functions.filter_function import FilterFunction
-from sage.common.core.functions.flatmap_function import FlatMapFunction
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import (
+    CustomLogger,
+    FilterFunction,
+    FlatMapFunction,
+    MapFunction,
+    SinkFunction,
+    SourceFunction,
+)
+from sage.runtime import LocalEnvironment
 
 # 尝试导入 MemoryManager（可选，用于持久化向量库）
-try:
-    from sage.middleware.components.sage_mem.neuromem.memory_manager import MemoryManager
-
-    HAS_MEMORY_MANAGER = True
-    _ = MemoryManager  # 标记为已使用（可选功能）
-except ImportError:
-    HAS_MEMORY_MANAGER = False
-    print("⚠️ MemoryManager 不可用，使用简单内存向量库")
+HAS_MEMORY_MANAGER = False
+print("⚠️ 旧版 MemoryManager 教程适配已退役，使用简单内存向量库")
 
 
 # ============================================================
@@ -210,7 +205,9 @@ class SimpleVectorDB:
         """计算余弦相似度"""
         a_arr = np.array(a)
         b_arr = np.array(b)
-        return float(np.dot(a_arr, b_arr) / (np.linalg.norm(a_arr) * np.linalg.norm(b_arr)))
+        return float(
+            np.dot(a_arr, b_arr) / (np.linalg.norm(a_arr) * np.linalg.norm(b_arr))
+        )
 
 
 # ============================================================
@@ -276,7 +273,9 @@ class LLMGenerator(MapFunction):
         client = get_llm_client()
         try:
             response = client.chat(messages, temperature=0, max_tokens=100)
-            llm_output = response.content if hasattr(response, "content") else str(response)
+            llm_output = (
+                response.content if hasattr(response, "content") else str(response)
+            )
         except Exception as e:
             print(f"⚠️ LLM 调用失败: {e}")
             llm_output = '{"datasource": "web_search"}'
@@ -438,7 +437,9 @@ class WebSearchAgent(MapFunction):
                     temperature=0.7,
                     max_tokens=500,
                 )
-                answer = response.content if hasattr(response, "content") else str(response)
+                answer = (
+                    response.content if hasattr(response, "content") else str(response)
+                )
             except Exception as e:
                 answer = f"回答生成失败: {e}"
 
@@ -475,7 +476,11 @@ class WebSearchAgent(MapFunction):
                         temperature=0.7,
                         max_tokens=500,
                     )
-                    return response.content if hasattr(response, "content") else str(response)
+                    return (
+                        response.content
+                        if hasattr(response, "content")
+                        else str(response)
+                    )
             return f"未找到关于'{question}'的搜索结果。"
         except Exception as e:
             return f"Web 搜索失败: {e}"
@@ -602,7 +607,10 @@ def run_adaptive_rag_v2():
 
 if __name__ == "__main__":
     # 检查是否在测试模式下运行
-    if os.getenv("SAGE_EXAMPLES_MODE") == "test" or os.getenv("SAGE_TEST_MODE") == "true":
+    if (
+        os.getenv("SAGE_EXAMPLES_MODE") == "test"
+        or os.getenv("SAGE_TEST_MODE") == "true"
+    ):
         print("🧪 Test mode detected - adaptive_rag_v2 example")
         print("✅ Test passed: Example structure validated")
         sys.exit(0)

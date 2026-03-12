@@ -1,10 +1,12 @@
 # 此例用到了keyby和join操作符，展示如何将两个数据流按key进行关联。
-from sage.common.core.functions.batch_function import BatchFunction
-from sage.common.core.functions.join_function import BaseJoinFunction
-from sage.common.core.functions.keyby_function import KeyByFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import (
+    BaseJoinFunction,
+    BatchFunction,
+    CustomLogger,
+    KeyByFunction,
+    SinkFunction,
+)
+from sage.runtime import LocalEnvironment
 
 
 class SourceOne(BatchFunction):
@@ -91,7 +93,9 @@ def main():
     source1 = env.from_batch(SourceOne)
     source2 = env.from_batch(SourceTwo)
 
-    source1.keyby(IdKeyBy).connect(source2.keyby(IdKeyBy)).join(HelloWorldJoin).sink(PrintSink)
+    source1.keyby(IdKeyBy).connect(source2.keyby(IdKeyBy)).join(HelloWorldJoin).sink(
+        PrintSink
+    )
 
     # 使用 autostop=True 让框架自动检测处理完成
     env.submit(autostop=True)

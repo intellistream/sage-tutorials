@@ -1,24 +1,85 @@
+"""Fault tolerance usage examples.
+
+这些示例现在只依赖主仓 `sage` 包，演示如何：
+
+1. 在 `LocalEnvironment` 配置中声明容错策略；
+2. 用简单 source/sink 构造可运行示例；
+3. 为自定义策略定义清晰的最小协议。
+
+注意：当前示例重点是配置方式与扩展模式，保持 fail-fast，不再依赖已退役的分仓 API。
 """
-Fault Tolerance Usage Examples
 
-Layer: L3 (Kernel - Examples)
-Dependencies: sage.libs (L3 - optional examples only)
+from __future__ import annotations
 
-展示应用用户如何使用容错（无感知）以及开发者如何扩展容错策略。
+from pathlib import Path
+from typing import Any, Protocol
 
-⚠️ IMPORTANT - 架构说明:
-    本文件是**可选示例代码**，不是 kernel 的核心功能。
-    示例中使用 sage.libs 的 Source/Sink 是为了演示完整的容错流程。
+import yaml
 
-    运行这些示例需要安装 sage.libs:
-        pip install sage-libs
+from sage.foundation import SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment, StopSignal
 
-    用户可以使用自己的 Source/Sink 实现，无需依赖 sage.libs。
 
-Architecture Note:
-    这些示例演示完整的使用场景，需要 sage.libs 提供 Source/Sink。
-    如果 sage.libs 不可用，示例将无法运行，但不影响 kernel 的核心功能。
-"""
+class DemoFileSource(SourceFunction):
+    """Simple source that reads lines from a file when available."""
+
+    def __init__(self, config: dict[str, Any] | None = None, **kwargs):
+        super().__init__(**kwargs)
+        cfg = dict(config or {})
+        data_path = cfg.get("data_path") or cfg.get("file_path")
+        self._lines = self._load_lines(data_path)
+        self._index = 0
+
+    @staticmethod
+    def _load_lines(data_path: str | None) -> list[str]:
+        if data_path:
+            path = Path(data_path)
+            if path.exists():
+                return [
+                    line.rstrip("\n")
+                    for line in path.read_text(encoding="utf-8").splitlines()
+                ]
+        return [
+            "What is SAGE?",
+            "How do I run sage verify?",
+            "Why is stream-first important?",
+        ]
+
+    def execute(self, data=None):
+        if self._index >= len(self._lines):
+            return StopSignal("demo-file-source-finished")
+        line = self._lines[self._index]
+        self._index += 1
+        return line
+
+
+class DemoTerminalSink(SinkFunction):
+    """Simple sink that prints output."""
+
+    def execute(self, data):
+        if isinstance(data, StopSignal) or data is None:
+            return None
+        print(f"OUTPUT> {data}")
+        return data
+
+
+def _load_yaml_config(path: str | Path) -> dict[str, Any]:
+    config_path = Path(path)
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise ValueError("YAML config must deserialize to a mapping")
+    return data
+
+
+class FaultHandlerProtocol(Protocol):
+    def handle_failure(self, task_id: str, error: Exception) -> bool: ...
+
+    def can_recover(self, task_id: str) -> bool: ...
+
+    def recover(self, task_id: str) -> bool: ...
+
 
 # ============================================================================
 # 应用用户示例 - 容错配置对用户是透明的
@@ -31,21 +92,7 @@ def example_1_user_checkpoint_strategy():
 
     用户只需在 Environment 配置中声明，无需编写任何容错代码。
 
-    Requirements:
-        pip install sage-libs
     """
-    from sage.kernel.api.local_environment import LocalEnvironment
-
-    # 此示例需要 sage.libs
-    try:
-        from sage.libs.foundation.io.sink import TerminalSink
-        from sage.libs.foundation.io.source import FileSource
-    except ImportError as e:
-        raise ImportError(
-            "This example requires sage.libs. "
-            "Install it with: pip install sage-libs\n"
-            "Or use your own Source/Sink implementations."
-        ) from e
 
     # 创建环境时声明使用 Checkpoint 容错策略
     env = LocalEnvironment(
@@ -64,9 +111,9 @@ def example_1_user_checkpoint_strategy():
 
     # 正常定义 DAG - 完全不需要关心容错
     (
-        env.from_source(FileSource, env.config["source"])
+        env.from_source(DemoFileSource, env.config["source"])
         .map(lambda x: x.upper())  # 一些处理
-        .sink(TerminalSink, env.config["sink"])
+        .sink(DemoTerminalSink, env.config["sink"])
     )
 
     # 提交作业 - 容错由系统自动处理
@@ -82,19 +129,7 @@ def example_2_user_restart_strategy():
 
     使用指数退避重启策略，用户同样无需编写容错代码。
 
-    Requirements:
-        pip install sage-libs
     """
-    from sage.kernel.api.local_environment import LocalEnvironment
-
-    try:
-        from sage.libs.foundation.io.sink import TerminalSink
-        from sage.libs.foundation.io.source import FileSource
-    except ImportError as e:
-        raise ImportError(
-            "This example requires sage.libs. Install it with: pip install sage-libs"
-        ) from e
-
     # 使用指数退避重启策略
     env = LocalEnvironment(
         "data_pipeline_with_restart",
@@ -114,9 +149,9 @@ def example_2_user_restart_strategy():
 
     # 定义 DAG - 用户不关心容错
     (
-        env.from_source(FileSource, env.config["source"])
+        env.from_source(DemoFileSource, env.config["source"])
         .map(lambda x: x.strip())
-        .sink(TerminalSink, env.config["sink"])
+        .sink(DemoTerminalSink, env.config["sink"])
     )
 
     # 提交 - 失败时自动重启
@@ -129,27 +164,15 @@ def example_3_user_no_fault_tolerance():
     """
     示例 3: 用户不配置容错（使用默认行为）
 
-    Requirements:
-        pip install sage-libs
     """
-    from sage.kernel.api.local_environment import LocalEnvironment
-
-    try:
-        from sage.libs.foundation.io.sink import TerminalSink
-        from sage.libs.foundation.io.source import FileSource
-    except ImportError as e:
-        raise ImportError(
-            "This example requires sage.libs. Install it with: pip install sage-libs"
-        ) from e
-
     # 不配置 fault_tolerance，使用默认行为
     env = LocalEnvironment("simple_pipeline")
 
     # 正常定义和提交
     (
-        env.from_source(FileSource, {"data_path": "data.txt"})
+        env.from_source(DemoFileSource, {"data_path": "data.txt"})
         .map(lambda x: x.upper())
-        .sink(TerminalSink, {})
+        .sink(DemoTerminalSink, {})
     )
 
     env.submit()
@@ -163,20 +186,7 @@ def example_4_user_yaml_config():
 
     这是最常见的用法 - 配置在外部文件中管理。
 
-    Requirements:
-        pip install sage-libs
     """
-    from sage.common.utils.config.loader import load_config
-    from sage.kernel.api.local_environment import LocalEnvironment
-
-    try:
-        from sage.libs.foundation.io.sink import TerminalSink
-        from sage.libs.foundation.io.source import FileSource
-    except ImportError as e:
-        raise ImportError(
-            "This example requires sage.libs. Install it with: pip install sage-libs"
-        ) from e
-
     # config.yaml 内容示例：
     # fault_tolerance:
     #   strategy: checkpoint
@@ -186,15 +196,15 @@ def example_4_user_yaml_config():
     #   file_path: data/input.txt
     # sink: {}
 
-    config = load_config("config/my_pipeline.yaml")
+    config = _load_yaml_config("config/my_pipeline.yaml")
 
     # 容错配置从 YAML 文件读取
     env = LocalEnvironment("yaml_configured_pipeline", config=config)
 
     (
-        env.from_source(FileSource, config["source"])
+        env.from_source(DemoFileSource, config["source"])
         .map(lambda x: x.strip())
-        .sink(TerminalSink, config["sink"])
+        .sink(DemoTerminalSink, config["sink"])
     )
 
     env.submit()
@@ -211,11 +221,10 @@ def example_5_developer_custom_strategy():
     """
     示例 5: 开发者实现自定义容错策略
 
-    开发者可以继承 BaseFaultHandler 实现自己的容错逻辑。
+    开发者可以遵循一个最小容错协议实现自己的容错逻辑。
     """
-    from sage.kernel.fault_tolerance.base import BaseFaultHandler
 
-    class CircuitBreakerFaultHandler(BaseFaultHandler):
+    class CircuitBreakerFaultHandler(FaultHandlerProtocol):
         """
         断路器容错策略
 
@@ -287,7 +296,9 @@ def example_5_developer_custom_strategy():
             return True
 
     print("✅ Custom CircuitBreakerFaultHandler defined")
-    print("   Developers can extend BaseFaultHandler to create custom strategies")
+    print(
+        "   Developers can implement the fault-handler protocol to create custom strategies"
+    )
 
 
 def example_6_developer_register_strategy():
@@ -302,10 +313,10 @@ def example_6_developer_register_strategy():
     """
 
     # 步骤 1: 创建自定义策略文件
-    # packages/sage-kernel/src/sage/kernel/fault_tolerance/impl/circuit_breaker.py
+    # 例如: src/my_project/fault_tolerance/circuit_breaker.py
 
     # 步骤 2: 在 impl/__init__.py 添加导出
-    # from sage.kernel.fault_tolerance.impl.circuit_breaker import CircuitBreakerFaultHandler
+    # from my_project.fault_tolerance.circuit_breaker import CircuitBreakerFaultHandler
     # __all__ = [..., "CircuitBreakerFaultHandler"]
 
     # 步骤 3: 在 factory.py 添加创建逻辑
@@ -344,11 +355,10 @@ def example_7_developer_reference_implementations():
     查看 impl/ 目录下的实现来学习如何编写容错策略。
     """
     print("✅ Reference implementations in impl/:")
-    print("   - checkpoint_recovery.py: Checkpoint-based fault tolerance")
-    print("   - restart_recovery.py: Restart-based fault tolerance")
-    print("   - restart_strategy.py: Various restart strategies")
-    print("   - lifecycle_impl.py: Lifecycle management")
-    print("   - checkpoint_impl.py: Checkpoint management")
+    print("   - checkpoint-like policies: periodic state snapshots")
+    print("   - restart policies: fixed / exponential backoff")
+    print("   - lifecycle hooks: startup, failure, shutdown")
+    print("   - state managers: checkpoint persistence and restore")
 
 
 # ============================================================================

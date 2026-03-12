@@ -25,10 +25,8 @@ import os
 import sys
 from typing import Any
 
-from sage.common.core.functions.comap_function import BaseCoMapFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.local_environment import LocalEnvironment
-from sage.kernel.runtime.communication.packet import StopSignal
+from sage.foundation import BaseCoMapFunction, SourceFunction
+from sage.runtime import LocalEnvironment, StopSignal
 
 # 设置日志级别为ERROR减少输出
 os.environ.setdefault("SAGE_LOG_LEVEL", "ERROR")
@@ -96,7 +94,9 @@ def main():
     # Create streams and connect them
     temp_stream = env1.from_source(ListSource, [20.5, 22.1, 19.8, 25.3, 21.7])
     humidity_stream = env1.from_source(ListSource, [45, 52, 38, 67, 41])
-    pressure_stream = env1.from_source(ListSource, [1013.2, 1015.8, 1012.1, 1018.5, 1014.3])
+    pressure_stream = env1.from_source(
+        ListSource, [1013.2, 1015.8, 1012.1, 1018.5, 1014.3]
+    )
 
     # Connect streams properly
     connected_sensors = temp_stream.connect(humidity_stream).connect(pressure_stream)
@@ -212,7 +212,9 @@ def main():
 
     # Create diverse data sources
     numeric_source = env3.from_source(ListSource, [15.5, -2.3, 105.7, 42.1, 0.0])
-    text_source = env3.from_source(ListSource, ["hello", "world", "sage", "framework", "lambda"])
+    text_source = env3.from_source(
+        ListSource, ["hello", "world", "sage", "framework", "lambda"]
+    )
     boolean_source = env3.from_source(ListSource, [True, False, True, True, False])
 
     # Create and connect streams

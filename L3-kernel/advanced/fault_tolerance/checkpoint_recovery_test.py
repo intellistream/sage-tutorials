@@ -9,10 +9,8 @@ Checkpoint 容错机制测试
 import os
 import time
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import MapFunction, SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment, StopSignal
 
 
 class TestSource(SourceFunction):
@@ -29,8 +27,6 @@ class TestSource(SourceFunction):
 
         if self.counter > 10:
             self.logger.info("TestSource: finished")
-            from sage.kernel.runtime.communication.packet import StopSignal
-
             return StopSignal("TestSource-completed")
 
         # 模拟第 5 个数据处理时失败（只失败一次）

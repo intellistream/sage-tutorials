@@ -11,40 +11,8 @@ import random
 import time
 from typing import Any
 
-try:
-    from sage.common.core.functions.batch_function import BatchFunction
-    from sage.common.core.functions.map_function import MapFunction
-    from sage.common.core.functions.sink_function import SinkFunction
-    from sage.common.utils.logging.custom_logger import CustomLogger
-    from sage.kernel.api.local_environment import LocalEnvironment
-except ModuleNotFoundError:  # pragma: no cover - convenience for local runs
-    import sys
-    from pathlib import Path
-
-    here = Path(__file__).resolve()
-    repo_root = None
-    for parent in here.parents:
-        if (parent / "packages").exists():
-            repo_root = parent
-            break
-    if repo_root is None:
-        raise RuntimeError("Cannot locate SAGE repository root")
-
-    for extra_path in [
-        repo_root / "packages" / "sage" / "src",
-        repo_root / "packages" / "sage-common" / "src",
-        repo_root / "packages" / "sage-kernel" / "src",
-        repo_root / "packages" / "sage-middleware" / "src",
-        repo_root / "packages" / "sage-libs" / "src",
-        repo_root / "packages" / "sage-tools" / "src",
-    ]:
-        sys.path.insert(0, str(extra_path))
-
-    from sage.common.core.functions.batch_function import BatchFunction
-    from sage.common.core.functions.map_function import MapFunction
-    from sage.common.core.functions.sink_function import SinkFunction
-    from sage.common.utils.logging.custom_logger import CustomLogger
-    from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import BatchFunction, CustomLogger, MapFunction, SinkFunction
+from sage.runtime import LocalEnvironment
 
 from hello_pipeline_as_service import (
     SHUTDOWN_MESSAGE,

@@ -1,6 +1,6 @@
 # L3: Kernel - 核心引擎层示例
 
-> 对应 SAGE 包：`sage-kernel`
+> 当前对应 SAGE surface：`isage` → `sage.stream` / `sage.runtime`
 
 ## 📖 层级说明
 
@@ -14,12 +14,12 @@
 
 运行时 API 学习建议：
 
-- 默认路径（推荐）：`sage.kernel.facade` (`create/submit/run/call`)
-- 高级路径（专家）：`LocalEnvironment` / `FlownetEnvironment`
+- 默认路径（推荐）：`LocalEnvironment`
+- 高级路径（专家）：`FluttyEnvironment` 与 backend abstraction
 
 ## 📚 目录结构
 
-```
+```text
 L3-kernel/
 ├── batch/              # 批处理示例
 ├── stream/             # 流处理示例
@@ -71,7 +71,7 @@ L3-kernel/
 
 - `hello_future_world.py` - Future 异步处理
 - `hello_realistic_service_example.py` - 实际服务示例
-- `runtime_api_layering_advanced.py` - Facade 与 Local/FlownetEnvironment 双轨对照
+- `runtime_api_layering_advanced.py` - `LocalEnvironment` / `FluttyEnvironment` 分层对照
 - `fault_tolerance/` - 容错和检查点
 
 ## 🎯 学习目标

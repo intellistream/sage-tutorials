@@ -5,7 +5,7 @@ Embedding Server 使用示例
 无需修改任何原有代码，直接通过 get_embedding_model 调用。
 
 Requirements:
-    pip install isage-common>=0.2.0
+    pip install isage>=0.3.0
 
 Test Configuration:
     @test_category: tutorials
@@ -17,7 +17,7 @@ Test Configuration:
 import os
 
 from sagellm.embedding import get_embedding_model
-from sage.common.config.ports import SagePorts
+from sage.foundation import SagePorts
 
 # Check test mode
 _IS_TEST_MODE = (
@@ -189,9 +189,13 @@ def main():
     print("Embedding Server 使用示例")
     print("=" * 60)
     print("\n请确保 embedding 服务器已启动:")
-    print(f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}")
+    print(
+        f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}"
+    )
     print("\n或手动启动:")
-    print(f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}")
+    print(
+        f"  python -m sagellm_core.embedding_server --model BAAI/bge-m3 --port {EMBEDDING_PORT}"
+    )
     print("\n" + "=" * 60 + "\n")
 
     try:

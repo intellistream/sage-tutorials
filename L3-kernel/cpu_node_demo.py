@@ -25,14 +25,14 @@ import socket
 import time
 from typing import Any
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.flownet_environment import FlownetEnvironment
-from sage.kernel.runtime.communication.packet import StopSignal
-from sage.kernel.scheduler.api import BaseScheduler
-from sage.kernel.scheduler.decision import PlacementDecision
-from sage.kernel.scheduler.node_selector import NodeSelector
+from sage.foundation import MapFunction, SinkFunction, SourceFunction
+from sage.runtime import (
+    BaseScheduler,
+    FluttyEnvironment,
+    NodeSelector,
+    PlacementDecision,
+    StopSignal,
+)
 
 
 class CPUIntensiveSource(SourceFunction):
@@ -193,12 +193,11 @@ class CPUOnlyScheduler(BaseScheduler):
 
         decision = PlacementDecision(
             target_node=target_node,
-            resource_requirements={
+            resource={
                 "cpu": cpu,
                 "memory": memory,
                 "gpu": 0,  # CPU节点不需要GPU
             },
-            placement_strategy="cpu_only",
             reason=f"CPU task: selected CPU node {target_node} (no GPU required)",
         )
 
@@ -227,7 +226,7 @@ def demo_basic_cpu_node():
     print("  ✓ 任务执行过程中具备基本的监控和日志记录能力\n")
 
     # 创建FlownetEnvironment（默认会使用CPU节点）
-    env = FlownetEnvironment(name="cpu_node_basic_demo")
+    env = FluttyEnvironment(name="cpu_node_basic_demo")
 
     # 构建CPU任务流
     (
@@ -266,7 +265,7 @@ def demo_cpu_scheduler():
 
     # 创建使用CPU专用调度器的环境
     cpu_scheduler = CPUOnlyScheduler()
-    env = FlownetEnvironment(
+    env = FluttyEnvironment(
         name="cpu_scheduler_demo",
         scheduler=cpu_scheduler,
     )
@@ -287,8 +286,8 @@ def demo_cpu_scheduler():
     # 查看调度统计
     metrics = cpu_scheduler.get_metrics()
     print("\n📊 调度器统计:")
-    print(f"  - 调度任务数: {metrics.get('scheduled_count', 0)}")
-    print(f"  - 跳过任务数: {metrics.get('skipped_count', 0)}")
+    print(f"  - 调度任务数: {metrics.get('total_scheduled', 0)}")
+    print(f"  - 决策记录数: {metrics.get('decisions', 0)}")
 
     print("\n✅ 示例2完成!")
     print("=" * 70)
@@ -312,7 +311,7 @@ def demo_cpu_node_monitoring():
     print("  ✓ 详细的日志记录")
     print("  ✓ JobManager健康检查\n")
 
-    env = FlownetEnvironment(name="cpu_monitoring_demo")
+    env = FluttyEnvironment(name="cpu_monitoring_demo")
 
     # 构建任务流
     (
@@ -357,14 +356,22 @@ def demo_cluster_inspection():
         # 创建节点选择器
         node_selector = NodeSelector()
 
-        # 获取集群统计信息
-        stats = node_selector.get_cluster_stats()
+        # 获取节点信息并汇总统计
+        nodes = node_selector.get_all_nodes()
+        stats = {
+            "node_count": len(nodes),
+            "total_cpu": sum(node.available_cpu for node in nodes),
+            "available_cpu": sum(node.available_cpu for node in nodes),
+            "total_memory": sum(node.available_memory for node in nodes),
+            "available_memory": sum(node.available_memory for node in nodes),
+            "total_tasks": sum(node.task_count for node in nodes),
+            "nodes": nodes,
+        }
 
         print("📊 集群资源统计:")
         print(f"  • 节点数量: {stats.get('node_count', 0)}")
         print(f"  • 总CPU核心: {stats.get('total_cpu', 0):.1f}")
         print(f"  • 可用CPU: {stats.get('available_cpu', 0):.1f}")
-        print(f"  • CPU使用率: {stats.get('avg_cpu_usage', 0):.1%}")
         print(f"  • 总内存: {stats.get('total_memory', 0) / (1024**3):.2f} GB")
         print(f"  • 可用内存: {stats.get('available_memory', 0) / (1024**3):.2f} GB")
         print(f"  • 总任务数: {stats.get('total_tasks', 0)}")
@@ -375,11 +382,12 @@ def demo_cluster_inspection():
             print(f"\n📋 节点详情 ({len(nodes)} 个节点):")
             for i, node in enumerate(nodes, 1):
                 print(f"\n  节点 #{i}:")
-                print(f"    主机名: {node.get('hostname', 'unknown')}")
-                print(f"    CPU使用率: {node.get('cpu_usage', 0):.1%}")
-                print(f"    GPU使用率: {node.get('gpu_usage', 0):.1%}")
-                print(f"    内存使用率: {node.get('memory_usage', 0):.1%}")
-                print(f"    任务数: {node.get('task_count', 0)}")
+            print(f"    主机名: {node.hostname}")
+            print(f"    可用CPU: {node.available_cpu:.1f}")
+            print(f"    可用GPU: {node.available_gpu:.1f}")
+            print(f"    可用内存: {node.available_memory / (1024**3):.2f} GB")
+            print(f"    任务数: {node.task_count}")
+            print(f"    存活状态: {'是' if node.alive else '否'}")
 
         # 选择CPU节点
         print("\n🔍 选择最佳CPU节点:")
@@ -392,7 +400,7 @@ def demo_cluster_inspection():
             if node_res:
                 print(f"    主机名: {node_res.hostname}")
                 print(f"    可用CPU: {node_res.available_cpu:.1f}")
-                print(f"    CPU使用率: {node_res.cpu_usage:.1%}")
+                print(f"    可用GPU: {node_res.available_gpu:.1f}")
         else:
             print("  ⚠️  未找到合适的CPU节点")
 
@@ -422,7 +430,7 @@ def demo_resource_requirements():
     print("  ✓ 智能节点选择\n")
 
     # 创建环境
-    env = FlownetEnvironment(name="cpu_resource_demo")
+    env = FluttyEnvironment(name="cpu_resource_demo")
 
     # CPUComputeProcessor 已声明: cpu_required=2, memory_required="2GB", gpu_required=0
     print("💡 CPUComputeProcessor 资源需求:")
@@ -463,23 +471,17 @@ def print_usage_guide():
     print("📚 CPU节点使用指南")
     print("=" * 70)
 
-    print("\n1️⃣  启动JobManager (必需):")
-    print("   $ sage jobmanager start")
-    print("   或者手动启动:")
-    print("   $ python -m sage.kernel.runtime.job_manager --host 127.0.0.1 --port 19001")
+    print("\n1️⃣  准备外部分布式运行时 (必需):")
+    print("   SAGE 0.3 不再提供 sage jobmanager / sage cluster 旧命令")
+    print("   请先启动外部 Flutty / JobManager-compatible 运行时")
 
-    print("\n2️⃣  启动 Flownet 集群工作节点 (可选，多节点部署):")
-    print("   $ sage cluster start  # 启动集群")
-    print("   $ sage cluster status  # 查看集群状态")
+    print("\n2️⃣  检查运行时节点可见性:")
+    print("   $ sage runtime nodes")
 
-    print("\n3️⃣  检查集群状态:")
-    print("   $ sage jobmanager status")
-    print("   $ sage cluster status")
-
-    print("\n4️⃣  运行CPU任务:")
+    print("\n3️⃣  确认节点后运行示例:")
     print("   $ python cpu_node_demo.py")
 
-    print("\n5️⃣  查看日志:")
+    print("\n4️⃣  查看日志:")
     print("   $ ls -la .sage/logs/jobmanager/")
     print("   $ tail -f .sage/logs/jobmanager/session_*/jobmanager.log")
 
@@ -543,7 +545,7 @@ def main():
 
         print("\n💡 关键要点:")
         print("  • CPU节点通过NodeSelector自动选择（gpu_required=0）")
-        print("  • FlownetEnvironment自动与JobManager协作")
+        print("  • FluttyEnvironment自动与运行时后端协作")
         print("  • 支持自定义调度策略（CPUOnlyScheduler）")
         print("  • 内置监控和日志系统")
         print("  • 可在无GPU环境中运行")
@@ -551,10 +553,10 @@ def main():
         print("  • 提供集群资源检查工具")
 
         print("\n🔗 相关文件:")
-        print("  • JobManager: sage/kernel/runtime/job_manager.py")
-        print("  • NodeSelector: sage/kernel/scheduler/node_selector.py")
-        print("  • FlownetEnvironment: sage/kernel/api/flownet_environment.py")
-        print("  • Scheduler: sage/kernel/scheduler/impl/resource_aware_scheduler.py")
+        print("  • JobManager: sage/runtime/job_manager.py")
+        print("  • NodeSelector: sage/runtime/scheduler.py")
+        print("  • FluttyEnvironment: sage/runtime/environments.py")
+        print("  • Scheduler: sage/runtime/scheduler.py")
         print("  • 日志目录: .sage/logs/jobmanager/")
 
         print_usage_guide()
@@ -567,8 +569,8 @@ def main():
 
         traceback.print_exc()
         print("\n💡 提示:")
-        print("  1. 确保JobManager已启动: sage jobmanager start")
-        print("  2. 检查集群状态: sage cluster status")
+        print("  1. 先准备外部 Flutty / JobManager-compatible 运行时")
+        print("  2. 检查节点状态: sage runtime nodes")
         print("  3. 查看日志: .sage/logs/jobmanager/")
 
 

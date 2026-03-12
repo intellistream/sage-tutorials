@@ -1,11 +1,13 @@
 from time import sleep
 
-from sage.common.core.functions.base_function import BaseFunction
-from sage.common.core.functions.batch_function import BatchFunction
-from sage.common.core.functions.comap_function import BaseCoMapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import (
+    BaseCoMapFunction,
+    BaseFunction,
+    BatchFunction,
+    CustomLogger,
+    SinkFunction,
+)
+from sage.runtime import LocalEnvironment
 
 
 # 启动信号源（只发一次启动信号）

@@ -1,6 +1,6 @@
 # L3: Libs - 算法库层示例
 
-> 对应 SAGE 包：`sage-libs`
+> 当前对应 SAGE surface：`isage` + 可选能力适配器（如 `isagellm`、`isage-rag`）
 
 ## 📖 层级说明
 
@@ -14,7 +14,7 @@
 
 ## 📚 目录结构
 
-```
+```text
 L3-libs/
 ├── rag/            # RAG 应用
 ├── agents/         # 智能体应用
@@ -34,14 +34,14 @@ L3-libs/
 - `qa_no_retrieval.py` - 无检索问答
 - `usage_1_direct_library.py` - 直接使用库
 - `usage_2_sage_function.py` - SAGE 函数集成
-- `usage_3_memory_service.py` - 内存服务集成
-- `usage_4_complete_rag.py` - 完整 RAG 系统
+- `usage_3_memory_service.py` - 内存服务迁移说明
+- `usage_4_complete_rag.py` - 完整 RAG 迁移说明
 
 ### 2️⃣ Agents 应用 (`agents/`)
 
 构建智能体系统：
 
-- `basic_agent.py` - 基础智能体
+- `basic_agent.py` - 基础智能体迁移说明
 - `workflow_demo.py` - 工作流演示
 - `arxiv_search_tool.py` - arXiv 搜索工具
 - `demo_arxiv_search.py` - 搜索演示
@@ -53,7 +53,7 @@ L3-libs/
 - `embedding_demo.py` - 嵌入演示
 - `embedding_service_demo.py` - 嵌入服务
 - `pipeline_builder_embedding_demo.py` - 管道构建器
-- `cross_modal_search.py` - 跨模态搜索
+- `cross_modal_search.py` - 跨模态搜索迁移说明
 
 ### 4️⃣ LLM 应用 (`llm/`)
 

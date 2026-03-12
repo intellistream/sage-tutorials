@@ -25,10 +25,13 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.local_environment import LocalEnvironment
+try:
+    from isagellm import UnifiedInferenceClient
+except ImportError:
+    UnifiedInferenceClient = None
+
+from sage.foundation import MapFunction, SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment
 
 # =============================================================================
 # Data Models
@@ -153,7 +156,11 @@ class VectorSearchTool(BaseTool):
         return {
             "success": True,
             "documents": [
-                {"id": d["doc"]["id"], "content": d["doc"]["content"], "score": d["score"]}
+                {
+                    "id": d["doc"]["id"],
+                    "content": d["doc"]["content"],
+                    "score": d["score"],
+                }
                 for d in scored_docs[:top_k]
             ],
             "query": query,
@@ -167,7 +174,9 @@ class CalculatorTool(BaseTool):
     description = "Perform mathematical calculations."
     input_schema = {
         "type": "object",
-        "properties": {"expression": {"type": "string", "description": "Math expression"}},
+        "properties": {
+            "expression": {"type": "string", "description": "Math expression"}
+        },
         "required": ["expression"],
     }
 
@@ -228,8 +237,16 @@ class SlackSearchTool(BaseTool):
         query = arguments.get("query", "")
         channel = arguments.get("channel", "general")
         mock_messages = [
-            {"channel": channel, "user": "alice", "message": f"Discussing {query} in the meeting."},
-            {"channel": channel, "user": "bob", "message": f"Good point about {query}."},
+            {
+                "channel": channel,
+                "user": "alice",
+                "message": f"Discussing {query} in the meeting.",
+            },
+            {
+                "channel": channel,
+                "user": "bob",
+                "message": f"Good point about {query}.",
+            },
         ]
         return {"success": True, "messages": mock_messages, "query": query}
 
@@ -256,7 +273,11 @@ class ToolRegistry:
 
     def describe_tools(self) -> list[dict[str, Any]]:
         return [
-            {"name": tool.name, "description": tool.description, "input_schema": tool.input_schema}
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "input_schema": tool.input_schema,
+            }
             for tool in self._tools.values()
         ]
 
@@ -297,7 +318,7 @@ class UserQuerySource(SourceFunction):
 
     def execute(self, data=None) -> AgentState | None:
         if self.current_index >= len(self.queries):
-            from sage.kernel.runtime.communication.packet import StopSignal
+            from sage.runtime import StopSignal
 
             return StopSignal("All queries processed")
 
@@ -307,7 +328,8 @@ class UserQuerySource(SourceFunction):
         print(f"[UserQuerySource] Query {self.current_index}: {query}")
         print("=" * 60)
         return AgentState(
-            query=query, metadata={"query_id": self.current_index, "timestamp": time.time()}
+            query=query,
+            metadata={"query_id": self.current_index, "timestamp": time.time()},
         )
 
 
@@ -323,9 +345,12 @@ class ToolSelector(MapFunction):
         if self._llm_client is None:
             try:
                 import openai
+
                 # UnifiedInferenceClient is in isagellm package
                 # For this tutorial, we use openai client directly
-                self._llm_client = openai.OpenAI(base_url="http://localhost:8001/v1", api_key="dummy")
+                self._llm_client = openai.OpenAI(
+                    base_url="http://localhost:8001/v1", api_key="dummy"
+                )
             except Exception as e:
                 print(f"[ToolSelector] Warning: Could not create LLM client: {e}")
                 self._llm_client = None
@@ -369,7 +394,9 @@ Your response (JSON only):"""
         query_lower = query.lower()
         selected_tools = []
 
-        if any(word in query_lower for word in ["calculate", "math", "+", "-", "*", "/"]):
+        if any(
+            word in query_lower for word in ["calculate", "math", "+", "-", "*", "/"]
+        ):
             expr_match = re.search(r"[\d\s+\-*/().]+", query)
             expr = expr_match.group().strip() if expr_match else query
             selected_tools.append(
@@ -383,7 +410,9 @@ Your response (JSON only):"""
             selected_tools.append(
                 ToolCallRequest(tool_name="slack_search", arguments={"query": query})
             )
-        elif any(word in query_lower for word in ["what is", "how to", "explain", "sage"]):
+        elif any(
+            word in query_lower for word in ["what is", "how to", "explain", "sage"]
+        ):
             selected_tools.append(
                 ToolCallRequest(tool_name="vector_search", arguments={"query": query})
             )
@@ -408,14 +437,18 @@ Your response (JSON only):"""
                 selected_tools = self._parse_tool_selection(response)
                 if selected_tools:
                     data.selected_tools = selected_tools
-                    print(f"[ToolSelector] LLM selected: {[t.tool_name for t in selected_tools]}")
+                    print(
+                        f"[ToolSelector] LLM selected: {[t.tool_name for t in selected_tools]}"
+                    )
                     return data
             except Exception as e:
                 print(f"[ToolSelector] LLM call failed: {e}")
 
         print("[ToolSelector] Using fallback keyword matching...")
         data.selected_tools = self._fallback_tool_selection(data.query)
-        print(f"[ToolSelector] Fallback selected: {[t.tool_name for t in data.selected_tools]}")
+        print(
+            f"[ToolSelector] Fallback selected: {[t.tool_name for t in data.selected_tools]}"
+        )
         return data
 
 
@@ -447,7 +480,10 @@ class ToolExecutor(MapFunction):
                 print("     Result: Success")
             except Exception as e:
                 tool_result = ToolCallResult(
-                    tool_name=tool_request.tool_name, success=False, result=None, error=str(e)
+                    tool_name=tool_request.tool_name,
+                    success=False,
+                    result=None,
+                    error=str(e),
                 )
                 print(f"     Result: Error - {e}")
             data.tool_results.append(tool_result)
@@ -465,8 +501,8 @@ class ResponseGenerator(MapFunction):
     def _get_llm_client(self):
         if self._llm_client is None:
             try:
-                from sage.common.components.sage_llm import UnifiedInferenceClient
-
+                if UnifiedInferenceClient is None:
+                    raise RuntimeError("isagellm is not installed")
                 self._llm_client = UnifiedInferenceClient.create()
             except Exception:
                 self._llm_client = None
@@ -512,7 +548,9 @@ Provide a clear, concise response:"""
                             f"  - @{msg.get('user', '')}: {msg.get('message', '')}"
                         )
                 else:
-                    response_parts.append(f"  {json.dumps(tr.result, ensure_ascii=False)[:200]}")
+                    response_parts.append(
+                        f"  {json.dumps(tr.result, ensure_ascii=False)[:200]}"
+                    )
             elif not tr.success:
                 response_parts.append(f"  Error: {tr.error}")
         return "\n".join(response_parts)
@@ -528,7 +566,11 @@ Provide a clear, concise response:"""
             try:
                 prompt = self._build_response_prompt(data)
                 response = llm_client.chat(prompt)
-                data.response = response
+                data.response = (
+                    response
+                    if isinstance(response, str)
+                    else getattr(response, "content", str(response))
+                )
                 print("[ResponseGenerator] LLM response generated.")
                 return data
             except Exception as e:

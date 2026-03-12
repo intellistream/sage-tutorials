@@ -3,17 +3,19 @@
 支持终端输入问题，使用大模型生成回答的无界流处理示例
 """
 
+from __future__ import annotations
+
 import time
 
 from dotenv import load_dotenv
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.common.utils.config.loader import load_config
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
-from sage.middleware.operators.rag import OpenAIGenerator, QAPromptor
+from sage.foundation import CustomLogger, MapFunction, SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment
+
+try:
+    from ._qa_helpers import OpenAICompatibleGenerator, SimplePromptor, load_config
+except ImportError:
+    from _qa_helpers import OpenAICompatibleGenerator, SimplePromptor, load_config
 
 
 class TerminalInputSource(SourceFunction):
@@ -85,7 +87,9 @@ def create_qa_pipeline():
 
     # 加载配置
     load_dotenv(override=False)
-    config_path = os.path.join(os.path.dirname(__file__), "..", "config", "config_source.yaml")
+    config_path = os.path.join(
+        os.path.dirname(__file__), "..", "config", "config_source.yaml"
+    )
     config = load_config(config_path)
 
     # 创建本地环境
@@ -99,8 +103,8 @@ def create_qa_pipeline():
         (
             env.from_source(TerminalInputSource)
             .map(QuestionProcessor)
-            .map(QAPromptor, config["promptor"])
-            .map(OpenAIGenerator, config["generator"]["vllm"])
+            .map(SimplePromptor, config["promptor"])
+            .map(OpenAICompatibleGenerator, config["generator"]["vllm"])
             .map(AnswerFormatter)
             .sink(ConsoleSink)
         )
@@ -126,7 +130,10 @@ if __name__ == "__main__":
     import sys
 
     # 检查是否在测试模式下运行
-    if os.getenv("SAGE_EXAMPLES_MODE") == "test" or os.getenv("SAGE_TEST_MODE") == "true":
+    if (
+        os.getenv("SAGE_EXAMPLES_MODE") == "test"
+        or os.getenv("SAGE_TEST_MODE") == "true"
+    ):
         print("🧪 Test mode detected - qa_without_retrieval is interactive")
         print("✅ Test passed: Interactive example structure validated")
         sys.exit(0)

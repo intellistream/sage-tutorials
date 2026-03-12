@@ -3,10 +3,9 @@ SAGE RAG - Usage Examples
 
 This file demonstrates how to use the SAGE RAG (Retrieval-Augmented Generation) toolkit.
 
-Layer: L4 (Middleware - Operators and Service Integration)
-
-⚠️ NOTE: 这些示例优先展示 API 设计。`sage.libs.rag.*` 已提供核心组件，
-但部分高级算子仍位于 middleware 层。
+These legacy middleware demos are retained as migration notes.
+Current guidance is to use core `sage` runtime/dataflow APIs plus optional adapter
+packages such as `isage-rag` when advanced retrieval components are needed.
 """
 
 
@@ -64,42 +63,29 @@ def example_rag_pipeline():
     print("Example 2: Building a RAG Pipeline")
     print("=" * 60)
 
-    try:
-        from sage.middleware.operators.rag.pipeline import RAGPipeline  # noqa: F401
+    print("\n✓ Recommended RAG building blocks:")
+    print("  1. Load documents with your preferred loader")
+    print("  2. Build prompts as normal Python/SAGE operators")
+    print("  3. Use an OpenAI-compatible embedding endpoint or isagellm")
+    print("  4. Store vectors in an optional adapter backend such as isage-rag")
+    print("  5. Execute retrieval + generation in a core `sage.runtime` pipeline")
 
-        print("\n✓ RAG Pipeline components:")
-        print("  1. Document Loader: Load source documents")
-        print("  2. Text Splitter: Split into chunks")
-        print("  3. Embedder: Generate embeddings")
-        print("  4. Vector Store: Store and index embeddings")
-        print("  5. Retriever: Find relevant chunks")
-        print("  6. Generator: Generate answers")
-
-        print("\nExample pipeline setup:")
-        print(
-            """
-        from sage.middleware.operators.rag.pipeline import RAGPipeline
-        from sage.libs.rag.document_loaders import TextLoader
-
-        # Create pipeline
-        pipeline = RAGPipeline(
-            loader=TextLoader("knowledge_base/"),
-            chunk_size=512,
-            embedding_model="all-MiniLM-L6-v2",
-            llm_model="gpt-3.5-turbo"
-        )
-
-        # Build index
-        pipeline.build_index()
-
-        # Query
-        answer = pipeline.query("What is SAGE?")
-        print(answer)
+    print("\nExample migration sketch:")
+    print(
         """
-        )
+    from sage.runtime import LocalEnvironment
+    from sage.foundation import MapFunction
 
-    except ImportError as e:
-        print(f"✗ Import error: {e}")
+    env = LocalEnvironment("rag-demo")
+
+    # 1. Load and split documents in plain Python
+    # 2. Generate embeddings with isagellm or another OpenAI-compatible endpoint
+    # 3. Persist/search vectors with an optional adapter such as isage-rag
+    # 4. Feed retrieved context into a normal SAGE map pipeline
+
+    env.submit(autostop=True)
+    """
+    )
 
 
 def example_vector_stores():
@@ -118,40 +104,19 @@ def example_vector_stores():
     print("  - Chroma: Lightweight in-memory store")
     print("  - FAISS: Facebook AI Similarity Search")
 
-    print("\nExample: Using Milvus")
+    print("\nExample: Using an optional Milvus adapter")
     print(
         """
-    from sage.middleware.operators.rag.backends.milvus import MilvusBackend
-    from sage.middleware.operators.rag.pipeline import RAGPipeline
-
-    # Create Milvus backend
-    milvus = MilvusBackend(
-        host="localhost",
-        port=19530,
-        collection_name="documents"
-    )
-
-    # Use in RAG pipeline
-    pipeline = RAGPipeline(vector_store=milvus)
+    # Use an optional adapter package, for example isage-rag, to connect Milvus.
+    # Keep orchestration and prompting in your normal SAGE pipeline.
     """
     )
 
-    print("\nExample: Using ChromaDB")
+    print("\nExample: Using an optional Chroma adapter")
     print(
         """
-    from sage.middleware.operators.rag.backends.chroma import ChromaBackend
-
-    # Create Chroma backend
-    chroma = ChromaBackend(
-        persist_directory="./chroma_db",
-        collection_name="documents"
-    )
-
-    # Add documents
-    chroma.add_documents(documents, embeddings)
-
-    # Search
-    results = chroma.search(query_embedding, top_k=5)
+    # Use an optional adapter package to manage Chroma persistence/search.
+    # The core SAGE runtime remains responsible for pipeline orchestration.
     """
     )
 
@@ -167,38 +132,24 @@ def example_profiling():
     print("Example 4: RAG Pipeline Profiling")
     print("=" * 60)
 
-    try:
-        from sage.middleware.operators.rag.profiler import Query_Profiler  # noqa: F401
+    print("\n✓ Profiling ideas for modern RAG pipelines:")
+    print("  - Measure retrieval latency")
+    print("  - Track context length and token budget")
+    print("  - Log query complexity and routing decisions")
+    print("  - Compare answer quality across retriever/generator settings")
 
-        print("\n✓ RAG Profiler capabilities:")
-        print("  - Query profiling and analysis")
-        print("  - Complexity assessment")
-        print("  - Reasoning requirement detection")
-        print("  - Summarization strategy selection")
-
-        print("\nExample profiling:")
-        print(
-            """
-        from sage.middleware.operators.rag.profiler import Query_Profiler
-        from sage.middleware.operators.rag.pipeline import RAGPipeline
-
-        # Create profiler
-        profiler = Query_Profiler(config={})
-
-        # Profile query to determine strategy
-        query_info = {
-            "need_joint_reasoning": True,
-            "complexity": "High",
-            "need_summarization": True,
-            "summarization_length": 100,
-            "n_info_items": 3
-        }
-        result = profiler.execute(json.dumps(query_info))
+    print("\nExample profiling sketch:")
+    print(
         """
-        )
-
-    except ImportError as e:
-        print(f"✗ Import error: {e}")
+    metrics = {
+        "retrieval_ms": 18.4,
+        "generation_ms": 241.7,
+        "context_chars": 1532,
+        "strategy": "single-retrieval",
+    }
+    print(metrics)
+    """
+    )
 
 
 def example_advanced_retrieval():

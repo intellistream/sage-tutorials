@@ -10,10 +10,8 @@ import os
 import socket
 import time
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.flownet_environment import FlownetEnvironment
+from sage.foundation import MapFunction, SinkFunction, SourceFunction
+from sage.runtime import FluttyEnvironment, LoadAwareScheduler, StopSignal
 
 
 class SimpleSource(SourceFunction):
@@ -26,8 +24,6 @@ class SimpleSource(SourceFunction):
 
     def execute(self, data=None):
         if self.count >= self.max_count:
-            from sage.kernel.runtime.communication.packet import StopSignal
-
             return StopSignal("SimpleSource completed")
 
         data = f"item_{self.count}"
@@ -61,7 +57,8 @@ class ConsoleSink(SinkFunction):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.test_mode = (
-            os.getenv("SAGE_EXAMPLES_MODE") == "test" or os.getenv("SAGE_TEST_MODE") == "true"
+            os.getenv("SAGE_EXAMPLES_MODE") == "test"
+            or os.getenv("SAGE_TEST_MODE") == "true"
         )
         self.count = 0
         self.node_stats = {}  # 统计各节点处理数量
@@ -108,29 +105,30 @@ def example_default_scheduler():
     print("=" * 60 + "\n")
 
     # 检查是否在测试模式
-    test_mode = os.getenv("SAGE_EXAMPLES_MODE") == "test" or os.getenv("SAGE_TEST_MODE") == "true"
+    test_mode = (
+        os.getenv("SAGE_EXAMPLES_MODE") == "test"
+        or os.getenv("SAGE_TEST_MODE") == "true"
+    )
 
     # 检查 JobManager 是否可用
     if not check_jobmanager_available():
         if test_mode:
             # 在测试模式下，如果JobManager不可用，跳过测试
             print("⚠️  JobManager daemon 不可用，跳过测试")
-            print("   (在生产环境中需要先启动: sage jobmanager start)")
+            print("   (生产环境中请先准备外部运行时，并用: sage runtime nodes 检查)")
             return
         else:
             print("❌ 错误: JobManager daemon 未运行")
-            print("   请先启动: sage jobmanager start")
+            print("   SAGE 0.3 不再自动启动旧 jobmanager/cluster 命令")
+            print("   请先准备外部运行时，并确认: sage runtime nodes")
             return
 
     # 📊 开始计时
     total_start = time.time()
 
     # 步骤1: 创建环境 - 使用 load_aware 调度器和 spread 策略
-    print("📦 [1/5] 创建 FlownetEnvironment (使用 load_aware 调度器)...")
+    print("📦 [1/5] 创建 FluttyEnvironment (使用 load_aware 调度器)...")
     step_start = time.time()
-
-    # 使用 LoadAwareScheduler 配置分散策略
-    from sage.kernel.scheduler.impl import LoadAwareScheduler
 
     scheduler = LoadAwareScheduler(
         platform="remote",
@@ -138,9 +136,7 @@ def example_default_scheduler():
         strategy="spread",  # 使用 SPREAD 策略分散到不同节点
     )
 
-    env = FlownetEnvironment(
-        name="distributed_scheduler_demo", scheduler=scheduler, host="sage-node-1"
-    )
+    env = FluttyEnvironment(name="distributed_scheduler_demo", scheduler=scheduler)
     # 设置 JobManager 的可访问主机名（worker 节点通过此地址连接回 JobManager）
     # 注意：JobManager 启动时使用 0.0.0.0 监听，但 worker 需要实际可访问的主机名
     # env.jobmanager_host = "sage-node-1"
@@ -191,8 +187,7 @@ def example_default_scheduler():
     print("⏳ [5/5] 等待任务执行...")
     step_start = time.time()
     try:
-        # 等待任务执行完成
-        env._wait_for_completion()
+        # `autostop=True` 下批处理会在提交路径内完成
         step_duration = time.time() - step_start
         print(f"   ✅ 任务执行完成 (耗时: {step_duration:.3f}秒)\n")
     except Exception as e:
@@ -257,9 +252,9 @@ def main():
     print(
         """
 ⚠️  注意事项：
-  1. 运行前需要启动 JobManager daemon: sage jobmanager start
-    2. 确保 Flownet 集群已启动: sage cluster start
-  3. 如果连接失败，请检查 daemon 和集群状态
+    1. SAGE 0.3 不再提供 sage jobmanager / sage cluster 旧命令
+    2. 运行前请先准备外部 Flutty / JobManager-compatible 运行时
+    3. 用 sage runtime nodes 检查节点是否可见
 
 📋 分布式调度配置：
   - 调度器: LoadAwareScheduler (负载感知)
@@ -282,8 +277,8 @@ def main():
         import traceback
 
         traceback.print_exc()
-        print("\n提示: 请确保 JobManager daemon 正在运行")
-        print("启动命令: sage jobmanager start")
+        print("\n提示: 请确保外部分布式运行时已经启动")
+        print("检查命令: sage runtime nodes")
 
 
 if __name__ == "__main__":

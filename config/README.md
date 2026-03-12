@@ -95,7 +95,7 @@ Query refinement configuration.
 
 - `rag/qa_refiner.py`
 
-#### `config.yaml`
+#### `config.yaml`（共享教程配置）
 
 Unified tutorial configuration (local + Flownet-aligned runtime options).
 
@@ -253,7 +253,7 @@ tools:
 
 ## 📚 Related Documentation
 
-- **Configuration Loader**: `packages/sage-common/src/sage/common/utils/config/`
+- **Configuration Loader**: `sage.foundation` / `sage.runtime` 中的主仓配置入口
 - **RAG Configuration**: `CHANGELOG.md`
 - **Environment Setup**: `.env.example`
 

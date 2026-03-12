@@ -83,10 +83,7 @@ from typing import Any
 import numpy as np
 from dotenv import load_dotenv
 
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
+from sage.foundation import CustomLogger, MapFunction, SinkFunction, SourceFunction
 
 # ================================================================================
 # 配置数据类
@@ -297,15 +294,9 @@ class VectorRetriever(MapFunction):
         ]
 
     def _init_db(self):
-        """尝试初始化 sage_db"""
-        try:
-            from sage.middleware.components.sage_db import SageDB
-
-            self._db = SageDB(dim=self.config.get("dim", 384))
-            self.logger.info("✓ 已初始化 sage_db")
-        except Exception as e:
-            self.logger.warning(f"无法初始化 sage_db，使用模拟检索: {e}")
-            self._db = None
+        """初始化可选向量检索后端占位。"""
+        self._db = None
+        self.logger.info("✓ 使用教程内置检索逻辑（未启用外部向量后端）")
 
     def execute(self, data: dict[str, Any]) -> dict[str, Any]:
         query = data["query"]
@@ -356,15 +347,9 @@ class TSDBLogger(MapFunction):
         self._init_tsdb()
 
     def _init_tsdb(self):
-        """尝试初始化 sage_tsdb"""
-        try:
-            from sage.middleware.components.sage_tsdb import SageTSDB
-
-            self._tsdb = SageTSDB()
-            self.logger.info("✓ 已初始化 sage_tsdb")
-        except Exception as e:
-            self.logger.warning(f"无法初始化 sage_tsdb，使用内存记录: {e}")
-            self._tsdb = None
+        """初始化教程内存日志后端。"""
+        self._tsdb = None
+        self.logger.info("✓ 使用教程内存日志后端")
 
         # 内存中的备用日志
         self._memory_log: list[dict[str, Any]] = []
@@ -467,19 +452,8 @@ class ContextRefiner(MapFunction):
 
     def _init_refiner(self):
         """初始化 refiner"""
-        try:
-            from sage.middleware.components.sage_refiner import RefinerService
-
-            self._refiner = RefinerService(
-                config={
-                    "algorithm": self.algorithm,
-                    "budget": self.budget,
-                }
-            )
-            self.logger.info(f"✓ 已初始化 sage_refiner (algorithm={self.algorithm})")
-        except Exception as e:
-            self.logger.warning(f"无法初始化 sage_refiner，使用简单截断: {e}")
-            self._refiner = None
+        self._refiner = None
+        self.logger.info(f"✓ 使用教程内置上下文截断器 (algorithm={self.algorithm})")
 
     def execute(self, data: dict[str, Any]) -> dict[str, Any]:
         documents = data.get("retrieved_documents", [])
@@ -579,9 +553,12 @@ class LLMGenerator(MapFunction):
         """初始化 LLM 客户端"""
         try:
             import openai
+
             # UnifiedInferenceClient is in isagellm package
             # For this tutorial, we use openai client directly
-            self._client = openai.OpenAI(base_url="http://localhost:8001/v1", api_key="dummy")
+            self._client = openai.OpenAI(
+                base_url="http://localhost:8001/v1", api_key="dummy"
+            )
             self.logger.info("✓ 已初始化 OpenAI client (vLLM compatible)")
         except Exception as e:
             self.logger.warning(f"无法初始化 LLM 客户端，使用模拟回答: {e}")
@@ -651,7 +628,9 @@ class ResponseTSDBLogger(MapFunction):
             / max(data.get("original_length", 1), 1),
         }
 
-        self.logger.info(f"📊 [TSDB] 记录响应指标: latency={log_entry['generation_latency']:.2f}s")
+        self.logger.info(
+            f"📊 [TSDB] 记录响应指标: latency={log_entry['generation_latency']:.2f}s"
+        )
 
         data["response_metrics"] = log_entry
         return data
@@ -711,7 +690,7 @@ def build_rag_topology(config: RAGTopologyConfig | None = None):
     Source → Embedder → Retriever → TSDBLogger → Reranker
            → Refiner → Promptor → Generator → ResponseLogger → Sink
     """
-    from sage.kernel.api.local_environment import LocalEnvironment
+    from sage.runtime import LocalEnvironment
 
     config = config or RAGTopologyConfig()
 

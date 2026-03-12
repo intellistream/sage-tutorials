@@ -9,85 +9,39 @@ SAGE 远程批处理测试示例
 import atexit
 import os
 import random
-import subprocess
+import socket
 import time
 
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.flownet_environment import FlownetEnvironment
-from sage.kernel.runtime.communication.packet import StopSignal
+from sage.foundation import SinkFunction, SourceFunction
+from sage.runtime import FluttyEnvironment, StopSignal
 
 # 设置日志级别为ERROR减少输出
 os.environ.setdefault("SAGE_LOG_LEVEL", "ERROR")
 
-# 全局变量存储JobManager进程
-jobmanager_process = None
-
 
 def start_jobmanager():
-    """启动JobManager服务"""
-    global jobmanager_process
-
-    print("🚀 Starting JobManager service...")
+    """检查外部分布式运行时是否可用。"""
+    print("🚀 Checking external runtime service...")
     try:
-        # 直接启动JobManager模块
-        jobmanager_process = subprocess.Popen(
-            [
-                "python3",
-                "-m",
-                "sage.kernel.jobmanager.job_manager",
-                "--host",
-                "127.0.0.1",
-                "--port",
-                "19001",
-            ],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-
-        # 等待一下让JobManager完全启动
-        time.sleep(5)
-
-        # 检查进程是否还在运行
-        if jobmanager_process.poll() is None:
-            print("✅ JobManager service started successfully")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        result = sock.connect_ex(("127.0.0.1", 19001))
+        sock.close()
+        if result == 0:
+            print("✅ External runtime is reachable")
             return True
-        else:
-            stdout, stderr = jobmanager_process.communicate()
-            print("❌ JobManager failed to start:")
-            print(f"stdout: {stdout.decode()}")
-            print(f"stderr: {stderr.decode()}")
-            return False
-
+        print("❌ External runtime is not reachable on 127.0.0.1:19001")
+        print("   SAGE 0.3 不再自动启动旧 jobmanager 模块")
+        print("   请先准备外部运行时，并用 `sage runtime nodes` 检查节点")
+        return False
     except Exception as e:
-        print(f"❌ Failed to start JobManager: {e}")
+        print(f"❌ Failed to check external runtime: {e}")
         return False
 
 
 def stop_jobmanager():
-    """停止JobManager服务"""
-    global jobmanager_process
-
-    if jobmanager_process and jobmanager_process.poll() is None:
-        print("🛑 Stopping JobManager service...")
-        try:
-            # 发送终止信号
-            jobmanager_process.terminate()
-
-            # 等待进程结束，最多等待5秒
-            try:
-                jobmanager_process.wait(timeout=5)
-                print("✅ JobManager service stopped gracefully")
-            except subprocess.TimeoutExpired:
-                # 如果5秒内没有结束，强制杀死
-                jobmanager_process.kill()
-                jobmanager_process.wait()
-                print("⚠️ JobManager service force killed")
-
-        except Exception as e:
-            print(f"❌ Error stopping JobManager: {e}")
-        finally:
-            jobmanager_process = None
+    """保留兼容清理钩子；当前不再管理外部运行时生命周期。"""
+    return None
 
 
 # 注册退出时清理函数
@@ -111,7 +65,9 @@ class NumberSequenceSource(SourceFunction):
 
         self.counter += 1
         number = self.counter * 10 + random.randint(1, 9)
-        self.logger.debug(f"[Source] Generating number {self.counter}/{self.max_count}: {number}")
+        self.logger.debug(
+            f"[Source] Generating number {self.counter}/{self.max_count}: {number}"
+        )
         return number
 
 
@@ -139,7 +95,9 @@ class FileLineSource(SourceFunction):
 
         line = self.lines[self.current_index]
         self.current_index += 1
-        print(f"[FileSource] Reading line {self.current_index}/{len(self.lines)}: {line}")
+        print(
+            f"[FileSource] Reading line {self.current_index}/{len(self.lines)}: {line}"
+        )
         return line
 
 
@@ -183,7 +141,7 @@ def run_simple_batch_test():
     print("🔢 Test 1: Simple Number Sequence Batch Processing")
     print("=" * 50)
 
-    env = FlownetEnvironment("simple_batch_test")
+    env = FluttyEnvironment("simple_batch_test")
 
     # 创建有限数据源
     source_stream = env.from_source(NumberSequenceSource, max_count=5, delay=0.5)
@@ -214,7 +172,7 @@ def run_file_processing_test():
     print("📄 Test 2: File Line Batch Processing")
     print("=" * 50)
 
-    env = FlownetEnvironment("file_batch_test")
+    env = FluttyEnvironment("file_batch_test")
 
     # 模拟文件数据
     file_data = [
@@ -253,7 +211,7 @@ def run_multi_source_batch_test():
     print("🔀 Test 3: Multi-Source Batch Processing")
     print("=" * 50)
 
-    env = FlownetEnvironment("multi_source_batch_test")
+    env = FluttyEnvironment("multi_source_batch_test")
 
     # 创建多个不同速度的数据源
     numbers_stream = env.from_source(NumberSequenceSource, max_count=3, delay=0.5)
@@ -283,7 +241,7 @@ def run_processing_chain_test():
     print("⛓️  Test 4: Complex Processing Chain Batch")
     print("=" * 50)
 
-    env = FlownetEnvironment("complex_batch_test")
+    env = FluttyEnvironment("complex_batch_test")
 
     source_stream = env.from_source(NumberSequenceSource, max_count=8, delay=0.3)
 
@@ -295,7 +253,9 @@ def run_processing_chain_test():
         .filter(
             lambda x: x % 2 == 0 if not isinstance(x, (StopSignal, str)) else True
         )  # 只保留偶数，跳过StopSignal和字符串
-        .map(lambda x: x / 2 if not isinstance(x, StopSignal) else x)  # 除以2，跳过StopSignal
+        .map(
+            lambda x: x / 2 if not isinstance(x, StopSignal) else x
+        )  # 除以2，跳过StopSignal
         .map(
             lambda x: f"Result: {int(x)}" if not isinstance(x, (StopSignal, str)) else x
         )  # 格式化，跳过StopSignal和已格式化的字符串
@@ -317,7 +277,9 @@ def main():
     """主测试函数"""
     print("🎯 SAGE Batch Processing Tests with FlownetEnvironment")
     print("=" * 60)
-    print("🧪 Testing automatic batch termination using FlownetEnvironment with JobManager")
+    print(
+        "🧪 Testing automatic batch termination using FlownetEnvironment with JobManager"
+    )
     print("📈 Each test demonstrates different batch processing scenarios\n")
 
     # 启动JobManager服务

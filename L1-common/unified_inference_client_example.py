@@ -7,8 +7,8 @@ Requirements:
     pip install isagellm>=0.4.0
 
 Prerequisites:
-    1. 启动 vLLM 引擎: python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen2.5-0.5B-Instruct --port 8001
-    2. 或安装 isagellm: pip install isagellm && sage llm engine start <model>
+    1. 启动 sagellm 服务: sagellm serve
+    2. 或确认已有 OpenAI-compatible endpoint，并让 SAGE 能通过 sage serve gateway --probe --json 探活
 
 Test Configuration:
     @test_category: tutorials
@@ -23,12 +23,13 @@ import math
 import os
 from typing import TYPE_CHECKING, cast
 
-from sage.common.config.ports import SagePorts
+from sage.foundation import SagePorts
+
 try:
     from isagellm import UnifiedInferenceClient
 except ImportError:
     # If isagellm not installed, use OpenAI client directly
-    import openai
+
     UnifiedInferenceClient = None  # Will be checked in examples
 
 if TYPE_CHECKING:
@@ -237,11 +238,15 @@ def example_error_handling():
 
     try:
         # 尝试连接不存在的服务
-        client = UnifiedInferenceClient.create(control_plane_url="http://localhost:9999/v1")
+        client = UnifiedInferenceClient.create(
+            control_plane_url="http://localhost:9999/v1"
+        )
         client.chat([{"role": "user", "content": "test"}])
     except ConnectionError as e:
         print(f"\n捕获到连接错误: {e}")
-        print("提示: 请确保 Gateway 已启动 (sage gateway start)")
+        print(
+            "提示: 请确保外部 gateway 已启动，并先运行 sage serve gateway --probe --json"
+        )
     except Exception as e:
         print(f"\n捕获到错误: {type(e).__name__}: {e}")
 
@@ -260,11 +265,11 @@ def main():
         print("\n将跳过实际服务连接，仅显示配置信息")
     else:
         print("\n运行前请确保:")
-        print("  1. Gateway 已启动: sage gateway start")
-        print("  2. LLM 引擎已启动: sage llm engine start Qwen/Qwen2.5-0.5B-Instruct")
+        print("  1. Gateway 已可探活: sage serve gateway --probe --json")
         print(
-            "  3. Embedding 引擎已启动: sage llm engine start BAAI/bge-m3 --engine-kind embedding"
+            "  2. LLM / Embedding 服务已由 sagellm serve 或你的 OpenAI-compatible endpoint 提供"
         )
+        print("  3. 如需查看 SAGE 侧契约: sage serve gateway --json")
         print("\n如需跳过连接测试，设置环境变量: SAGE_TEST_MODE=true")
 
     example_basic_chat()
