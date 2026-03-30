@@ -8,7 +8,7 @@ Embedding Service Demo - 展示如何使用统一的 Embedding 能力
 4. 如何使用缓存优化性能
 
 Requirements:
-    pip install isage-middleware>=0.2.0
+    pip install isage>=0.3.0
 """
 
 import os
@@ -51,7 +51,9 @@ def demo_basic_embedding_service():
     info = {
         "method": config["method"],
         "model": config.get("model", "(built-in)"),
-        "dimension": int(embedder.get_dim()) if hasattr(embedder, "get_dim") else "dynamic",
+        "dimension": int(embedder.get_dim())
+        if hasattr(embedder, "get_dim")
+        else "dynamic",
         "normalize": bool(config.get("normalize", True)),
     }
     print("\n服务信息:")
@@ -75,14 +77,22 @@ def demo_basic_embedding_service():
         "自然语言处理很重要",
     ]
 
-    vectors = embedder.embed_batch(texts) if hasattr(embedder, "embed_batch") else [embedder.embed(t) for t in texts]
+    vectors = (
+        embedder.embed_batch(texts)
+        if hasattr(embedder, "embed_batch")
+        else [embedder.embed(t) for t in texts]
+    )
 
     print("\n批量文本 embedding:")
     print(f"  文本数量: {len(vectors)}")
     print(f"  每个向量维度: {len(vectors[0]) if vectors else 0}")
 
     # 再次查询相同文本 (测试缓存)
-    vectors2 = embedder.embed_batch(texts[:2]) if hasattr(embedder, "embed_batch") else [embedder.embed(t) for t in texts[:2]]
+    vectors2 = (
+        embedder.embed_batch(texts[:2])
+        if hasattr(embedder, "embed_batch")
+        else [embedder.embed(t) for t in texts[:2]]
+    )
 
     print("\n缓存测试:")
     print(f"  重复批量数量: {len(vectors2)}")

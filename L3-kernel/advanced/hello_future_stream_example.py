@@ -1,11 +1,13 @@
 import time
 
-from sage.common.core.functions.base_function import BaseFunction
-from sage.common.core.functions.comap_function import BaseCoMapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import (
+    BaseCoMapFunction,
+    BaseFunction,
+    CustomLogger,
+    SinkFunction,
+    SourceFunction,
+)
+from sage.runtime import LocalEnvironment
 
 
 # 初始数据源：启动计数器
@@ -97,7 +99,9 @@ class CounterSink(SinkFunction):
             print(f"[{self.custom_name}] 📊 {message}")
 
             if count >= 10:
-                print(f"[{self.custom_name}] 🎉 Counter completed! Final value: {count}")
+                print(
+                    f"[{self.custom_name}] 🎉 Counter completed! Final value: {count}"
+                )
         return data
 
 
@@ -152,8 +156,12 @@ def main():
     print(
         "   CounterSource → [Connected with Future] → CounterProcessor → Incrementer → ExitChecker → CounterSink"
     )
-    print("                           ↑                                                        ↓")
-    print("                           └────────────────── FeedbackDelayer ←────────────────────┘")
+    print(
+        "                           ↑                                                        ↓"
+    )
+    print(
+        "                           └────────────────── FeedbackDelayer ←────────────────────┘"
+    )
     print()
 
     print("✅ Pipeline validation:")

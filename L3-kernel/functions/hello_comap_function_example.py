@@ -10,10 +10,8 @@ import os
 import random
 import time
 
-from sage.common.core.functions.comap_function import BaseCoMapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import BaseCoMapFunction, SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment
 
 # 设置日志级别为ERROR减少输出
 os.environ.setdefault("SAGE_LOG_LEVEL", "ERROR")
@@ -104,7 +102,9 @@ class SensorDataProcessor(BaseCoMapFunction):
     def map1(self, data):
         """处理湿度数据（来自输入流1）"""
         humidity_value = data["value"]
-        status = "💧 HIGH" if humidity_value > self.humidity_alert_threshold else "✅ Normal"
+        status = (
+            "💧 HIGH" if humidity_value > self.humidity_alert_threshold else "✅ Normal"
+        )
         return {
             "stream": "humidity",
             "original": data,
@@ -116,7 +116,9 @@ class SensorDataProcessor(BaseCoMapFunction):
     def map2(self, data):
         """处理压力数据（来自输入流2）"""
         pressure_value = data["value"]
-        status = "⚡ HIGH" if pressure_value > self.pressure_alert_threshold else "✅ Normal"
+        status = (
+            "⚡ HIGH" if pressure_value > self.pressure_alert_threshold else "✅ Normal"
+        )
         return {
             "stream": "pressure",
             "original": data,
@@ -175,7 +177,9 @@ def main():
     connected_sensors = temp_stream.connect(humidity_stream).connect(pressure_stream)
 
     # 使用CoMap分别处理每种传感器数据
-    connected_sensors.comap(SensorDataProcessor).sink(SensorSink, name="AdvancedProcessor")
+    connected_sensors.comap(SensorDataProcessor).sink(
+        SensorSink, name="AdvancedProcessor"
+    )
 
     # 示例2：简单的类型特定格式化
     print("📝 Example 2: Simple Type-Specific Formatting")
@@ -199,6 +203,13 @@ def main():
 
         print(f"⏰ Running for {runtime} seconds...")
         time.sleep(runtime)  # 测试模式运行8秒，正常模式40秒
+
+    except ValueError as exc:
+        if "more than one SourceTransformation" in str(exc):
+            print("\n⚠️  SAGE 0.3 当前编译器暂不支持单个编译单元中的多源 CoMap 示例")
+            print("   已跳过实际执行；建议拆分为多个独立 pipeline 或等待多源编译支持。")
+        else:
+            raise
 
     except KeyboardInterrupt:
         print("\n\n🛑 Stopping CoMap Function Example...")

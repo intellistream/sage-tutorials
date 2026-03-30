@@ -14,50 +14,16 @@ import random
 import time
 from typing import Any
 
-# Try regular imports first; fall back to repo-relative paths when running
-# directly from the source tree without installing the package.
-try:
-    from sage.common.core.functions.batch_function import BatchFunction
-    from sage.common.core.functions.map_function import MapFunction
-    from sage.common.core.functions.sink_function import SinkFunction
-    from sage.common.core.functions.source_function import SourceFunction
-    from sage.common.utils.logging.custom_logger import CustomLogger
-    from sage.kernel.api.local_environment import LocalEnvironment
-    from sage.kernel.api.service.base_service import BaseService
-except ModuleNotFoundError:  # pragma: no cover - convenience for local runs
-    import sys
-    from pathlib import Path
-
-    here = Path(__file__).resolve()
-    repo_root = None
-    for parent in here.parents:
-        if (parent / "packages").exists():
-            repo_root = parent
-            break
-    if repo_root is None:
-        raise RuntimeError("Cannot locate SAGE repository root")
-
-    for extra_path in [
-        repo_root / "packages" / "sage" / "src",
-        repo_root / "packages" / "sage-common" / "src",
-        repo_root / "packages" / "sage-kernel" / "src",
-        repo_root / "packages" / "sage-middleware" / "src",
-        repo_root / "packages" / "sage-libs" / "src",
-        repo_root / "packages" / "sage-tools" / "src",
-    ]:
-        sys.path.insert(0, str(extra_path))
-
-    from sage.common.core.functions.batch_function import BatchFunction
-    from sage.common.core.functions.map_function import MapFunction
-    from sage.common.core.functions.sink_function import SinkFunction
-    from sage.common.core.functions.source_function import SourceFunction
-    from sage.common.utils.logging.custom_logger import CustomLogger
-    from sage.kernel.api.local_environment import LocalEnvironment
-    from sage.kernel.api.service.base_service import BaseService
+from sage.foundation import (
+    BatchFunction,
+    CustomLogger,
+    MapFunction,
+    SinkFunction,
+    SourceFunction,
+)
+from sage.runtime import BaseService, LocalEnvironment, StopSignal
 
 from pipeline_bridge import PipelineBridge, PipelinePayload
-
-from sage.kernel.runtime.communication.packet import StopSignal
 
 ORDERS: list[dict[str, str | float]] = [
     {"order_id": "o-1001", "user_id": "user-001", "amount": 129.9},
@@ -84,7 +50,9 @@ class ServiceDrivenSource(SourceFunction):
         if isinstance(request, StopSignal):
             return request
 
-        return PipelinePayload(order=request.payload, response_queue=request.response_queue)
+        return PipelinePayload(
+            order=request.payload, response_queue=request.response_queue
+        )
 
 
 class OrderSource(BatchFunction):
@@ -250,7 +218,9 @@ class OrderPipelineService(BaseService):
         try:
             return response_queue.get(timeout=self._request_timeout)
         except queue.Empty as exc:
-            raise TimeoutError("Pipeline service timed out waiting for a reply") from exc
+            raise TimeoutError(
+                "Pipeline service timed out waiting for a reply"
+            ) from exc
 
 
 class InvokePipeline(MapFunction):

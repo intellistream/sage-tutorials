@@ -1,9 +1,11 @@
-from sage.common.core.functions.batch_function import BatchFunction
-from sage.common.core.functions.flatmap_function import FlatMapFunction
-from sage.common.core.functions.map_function import MapFunction
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.utils.logging.custom_logger import CustomLogger
-from sage.kernel.api.local_environment import LocalEnvironment
+from sage.foundation import (
+    BatchFunction,
+    CustomLogger,
+    FlatMapFunction,
+    MapFunction,
+    SinkFunction,
+)
+from sage.runtime import LocalEnvironment
 
 
 # 批处理数据源：生成几行句子

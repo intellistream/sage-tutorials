@@ -6,7 +6,7 @@ in different scenarios. These are educational demonstrations for developers
 and users, not formal unit tests.
 
 For the actual tool implementation, see: arxiv_search_tool.py
-For formal unit tests, see: packages/sage-libs/tests/lib/agents/test_arxiv_tool.py
+For formal unit tests, see the repository test suite for the installed `sage.libs.agentic` tool surface.
 
 Examples included:
 - Basic usage with different parameters

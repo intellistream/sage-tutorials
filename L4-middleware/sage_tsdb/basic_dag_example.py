@@ -12,7 +12,10 @@ from typing import Any
 
 import numpy as np
 
-from sage.middleware.components.sage_tsdb import SageTSDB, TimeRange
+try:
+    from .compat import SageTSDB, TimeRange
+except ImportError:
+    from compat import SageTSDB, TimeRange
 
 
 def generate_time_series_data(

@@ -34,4 +34,7 @@ python examples/tutorials/rag/qa_local_llm.py
 
 - **Advanced RAG examples**: See `packages/sage-benchmark/src/sage/benchmark/benchmark_rag/` for
   production-ready RAG pipelines and benchmarks
-- **RAG library**: `packages/sage-libs/src/sage/libs/rag/`
+- **Advanced RAG examples**: See `sage-benchmark/experiments/pipelines/` for production-ready
+  RAG pipelines and benchmarks
+- **Current core surface**: use `isage>=0.3.0` with `sage.foundation` / `sage.runtime`; add
+  `isagellm` or `isage-rag` only when a specific retriever or gateway backend is needed

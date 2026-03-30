@@ -7,16 +7,150 @@
 @test:allow-demo
 """
 
+from dataclasses import dataclass
 import json
+from typing import Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
 
-from sage.cli.commands.apps.pipeline_domain import load_domain_contexts
-from sage.cli.commands.apps.pipeline_knowledge import get_default_knowledge_base
-
 console = Console()
+
+
+@dataclass(frozen=True)
+class DemoChunk:
+    source: str
+    text: str
+    score: float
+
+
+@dataclass(frozen=True)
+class DemoTemplate:
+    id: str
+    title: str
+    tags: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class DemoTemplateMatch:
+    template: DemoTemplate
+    score: float
+
+
+@dataclass(frozen=True)
+class DemoBlueprint:
+    id: str
+    title: str
+
+
+class DemoKnowledgeBase:
+    def __init__(self, chunks: list[DemoChunk]) -> None:
+        self._chunks = chunks
+
+    def search(self, query: str, top_k: int = 3) -> list[DemoChunk]:
+        query_terms = {term for term in query.lower().split() if term}
+        scored: list[tuple[float, DemoChunk]] = []
+        for chunk in self._chunks:
+            text_terms = set(chunk.text.lower().split())
+            overlap = len(query_terms & text_terms)
+            score = chunk.score + overlap * 0.05
+            scored.append((score, chunk))
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [
+            DemoChunk(source=chunk.source, text=chunk.text, score=score)
+            for score, chunk in scored[:top_k]
+        ]
+
+
+def load_domain_contexts(limit: int = 2) -> tuple[str, ...]:
+    contexts = (
+        "LocalEnvironment + DataStream + Sink 是当前 SAGE 0.3 的核心流水线骨架。",
+        "如需真实推理能力，优先通过 sagellm gateway 或 sagellm CLI 与 sage chat 集成。",
+        "轻量索引入口是 sage index ingest；复杂 RAG 能力仍属于可选 adapter。",
+    )
+    return contexts[:limit]
+
+
+def get_default_knowledge_base(
+    max_chunks: int = 500, allow_download: bool = False
+) -> DemoKnowledgeBase:
+    del max_chunks, allow_download
+    return DemoKnowledgeBase(
+        [
+            DemoChunk(
+                source="README.md",
+                text="SAGE 0.3 聚焦 stream runtime serving cli 四个核心表面。",
+                score=0.92,
+            ),
+            DemoChunk(
+                source="DEVELOPER.md",
+                text="推荐使用 sage verify sage runtime nodes sage serve gateway 和 sage chat。",
+                score=0.89,
+            ),
+            DemoChunk(
+                source="CONTRIBUTING.md",
+                text="安装后最小验证命令包括 sage verify 和 sage index ingest。",
+                score=0.85,
+            ),
+        ]
+    )
+
+
+def build_query_payload(requirements: dict[str, Any]) -> str:
+    return " ".join(
+        str(part)
+        for part in [
+            requirements.get("name", ""),
+            requirements.get("goal", ""),
+            " ".join(requirements.get("data_sources", [])),
+            requirements.get("constraints", ""),
+        ]
+        if part
+    )
+
+
+def match_templates(
+    requirements: dict[str, Any], top_k: int = 3
+) -> list[DemoTemplateMatch]:
+    template_pool = [
+        DemoTemplate("rag-qa", "RAG 智能问答", ("rag", "qa", "retrieval")),
+        DemoTemplate("stream-chat", "流式聊天助手", ("chat", "stream", "llm")),
+        DemoTemplate("doc-index", "文档索引构建", ("index", "embedding", "docs")),
+    ]
+    goal = str(requirements.get("goal", "")).lower()
+    matches: list[DemoTemplateMatch] = []
+    for template in template_pool:
+        score = 0.4 + sum(0.15 for tag in template.tags if tag in goal)
+        matches.append(DemoTemplateMatch(template=template, score=score))
+    matches.sort(key=lambda item: item.score, reverse=True)
+    return matches[:top_k]
+
+
+def match_blueprints(
+    requirements: dict[str, Any],
+) -> tuple[tuple[DemoBlueprint, float], ...]:
+    matches = [
+        (DemoBlueprint("local-rag", "本地检索增强问答"), 0.94),
+        (DemoBlueprint("gateway-chat", "外部 gateway 驱动聊天服务"), 0.88),
+        (DemoBlueprint("index-first", "先索引后问答工作流"), 0.81),
+    ]
+    if "流式" in str(requirements.get("constraints", "")):
+        matches = [(blueprint, score + 0.02) for blueprint, score in matches]
+    return tuple(matches)
+
+
+def validate_pipeline_config(config: dict[str, Any]) -> tuple[bool, list[str]]:
+    errors: list[str] = []
+    for required_key in ["pipeline", "source", "stages", "sink"]:
+        if required_key not in config:
+            errors.append(f"缺少顶层字段: {required_key}")
+    if not isinstance(config.get("stages", []), list) or not config.get("stages"):
+        errors.append("stages 必须是非空列表")
+    pipeline = config.get("pipeline", {})
+    if isinstance(pipeline, dict) and not pipeline.get("name"):
+        errors.append("pipeline.name 不能为空")
+    return not errors, errors
 
 
 def demonstrate_llm_pipeline():
@@ -63,7 +197,9 @@ def demonstrate_llm_pipeline():
     try:
         kb = get_default_knowledge_base(max_chunks=500, allow_download=False)
         console.print("✓ 知识库初始化成功")
-        console.print("  - 文档来源: docs-public/, examples/, packages/sage-libs/")
+        console.print(
+            "  - 文档来源: docs-public/, examples/, installed SAGE knowledge assets"
+        )
         console.print("  - 检索方法: 向量相似度匹配")
     except Exception as exc:
         console.print(f"[yellow]知识库初始化失败: {exc}[/yellow]")
@@ -73,8 +209,6 @@ def demonstrate_llm_pipeline():
     # Step 4: RAG 检索
     console.print("\n[bold]步骤 4: RAG 检索相关文档和代码[/bold]")
     if kb:
-        from sage.cli.commands.apps.pipeline_knowledge import build_query_payload
-
         query = build_query_payload(requirements)
         console.print(f"\n检索查询: [cyan]{query[:150]}...[/cyan]")
 
@@ -94,9 +228,7 @@ def demonstrate_llm_pipeline():
     # Step 5: 模板匹配
     console.print("\n[bold]步骤 5: 匹配应用模板[/bold]")
     try:
-        from sage.cli import templates
-
-        matches = templates.match_templates(requirements, top_k=3)
+        matches = match_templates(requirements, top_k=3)
         console.print(f"✓ 找到 {len(matches)} 个相关模板:")
         for match in matches[:3]:
             console.print(f"  - {match.template.title} ({match.template.id})")
@@ -108,9 +240,7 @@ def demonstrate_llm_pipeline():
     # Step 6: 蓝图匹配
     console.print("\n[bold]步骤 6: 匹配配置蓝图[/bold]")
     try:
-        from sage.cli.templates import pipeline_blueprints
-
-        blueprint_matches = tuple(pipeline_blueprints.match_blueprints(requirements))
+        blueprint_matches = match_blueprints(requirements)
         console.print(f"✓ 找到 {len(blueprint_matches)} 个相关蓝图:")
         for blueprint, score in blueprint_matches[:3]:
             console.print(f"  - {blueprint.id}: {blueprint.title}")
@@ -202,9 +332,7 @@ def demonstrate_llm_pipeline():
 
     # Step 9: 验证配置
     console.print("\n[bold]步骤 9: 验证生成的配置[/bold]")
-    from sage.cli.commands.apps.chat import _validate_pipeline_config
-
-    is_valid, errors = _validate_pipeline_config(example_config)
+    is_valid, errors = validate_pipeline_config(example_config)
     if is_valid:
         console.print("[green]✓ 配置验证通过[/green]")
     else:

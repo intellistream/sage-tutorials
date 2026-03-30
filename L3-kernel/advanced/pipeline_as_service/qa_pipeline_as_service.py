@@ -15,54 +15,30 @@ import queue
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
+import json
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+import yaml
 
-try:  # pragma: no cover - allow running directly from source tree
-    from sage.common.core.functions.map_function import MapFunction
-    from sage.common.core.functions.sink_function import SinkFunction
-    from sage.common.core.functions.source_function import SourceFunction
-    from sage.common.utils.config.loader import load_config
-    from sage.common.utils.logging.custom_logger import CustomLogger
-    from sage.kernel.api.local_environment import LocalEnvironment
-    from sage.kernel.api.service.base_service import BaseService
-    from sage.kernel.runtime.communication.packet import StopSignal
-    from sage.middleware.operators.rag import HFGenerator, OpenAIGenerator, QAPromptor
-except ModuleNotFoundError:  # pragma: no cover - local convenience path
-    here = Path(__file__).resolve()
-    repo_root: Path | None = None
-    for parent in here.parents:
-        if (parent / "packages").exists():
-            repo_root = parent
-            break
-    if repo_root is None:
-        raise RuntimeError("Cannot locate SAGE repository root")
-
-    for extra_path in [
-        repo_root / "packages" / "sage" / "src",
-        repo_root / "packages" / "sage-common" / "src",
-        repo_root / "packages" / "sage-kernel" / "src",
-        repo_root / "packages" / "sage-middleware" / "src",
-        repo_root / "packages" / "sage-libs" / "src",
-        repo_root / "packages" / "sage-tools" / "src",
-    ]:
-        sys.path.insert(0, str(extra_path))
-
-    from sage.common.core.functions.map_function import MapFunction
-    from sage.common.core.functions.sink_function import SinkFunction
-    from sage.common.core.functions.source_function import SourceFunction
-    from sage.common.utils.config.loader import load_config
-    from sage.common.utils.logging.custom_logger import CustomLogger
-    from sage.kernel.api.local_environment import LocalEnvironment
-    from sage.kernel.api.service.base_service import BaseService
-    from sage.kernel.runtime.communication.packet import StopSignal
-    from sage.middleware.operators.rag import HFGenerator, OpenAIGenerator, QAPromptor
+from sage.foundation import CustomLogger, MapFunction, SinkFunction, SourceFunction
+from sage.runtime import BaseService, LocalEnvironment, StopSignal
 
 from pipeline_bridge import PipelineBridge
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "config_source.yaml"
+CONFIG_PATH = (
+    Path(__file__).resolve().parent.parent.parent / "config" / "config_source.yaml"
+)
+
+
+def _load_config(path: Path) -> dict[str, Any]:
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(data, dict):
+        raise ValueError("QA config must deserialize to a mapping")
+    return data
 
 
 def _extract_answer_text(generated: Any) -> str:
@@ -166,6 +142,109 @@ class MockGenerator(MapFunction):
         return result
 
 
+class SimplePromptBuilder:
+    """Small in-file prompt builder to avoid retired middleware dependencies."""
+
+    def __init__(self, config: dict[str, Any] | None = None):
+        cfg = dict(config or {})
+        self._system_prompt = str(
+            cfg.get(
+                "system_prompt",
+                "You are a concise QA assistant. Answer faithfully based on the user question.",
+            )
+        )
+        self._template = str(
+            cfg.get(
+                "template",
+                "Question: {query}\n\nProvide a direct and concise answer.",
+            )
+        )
+
+    def execute(self, payload: dict[str, Any]) -> list[Any]:
+        query = str(payload.get("query") or payload.get("question") or "").strip()
+        return [
+            dict(payload),
+            [
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": self._template.format(query=query)},
+            ],
+        ]
+
+
+class OpenAICompatibleGenerator(MapFunction):
+    """Minimal OpenAI-compatible generator implemented with stdlib HTTP."""
+
+    def __init__(self, config: dict[str, Any] | None = None, **kwargs):
+        super().__init__(**kwargs)
+        cfg = dict(config or {})
+        self._base_url = str(
+            cfg.get("base_url")
+            or os.getenv("SAGE_CHAT_BASE_URL")
+            or os.getenv("OPENAI_BASE_URL")
+            or ""
+        ).rstrip("/")
+        self._api_key = str(
+            cfg.get("api_key")
+            or os.getenv("SAGE_CHAT_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+            or ""
+        )
+        self._model = str(
+            cfg.get("model")
+            or cfg.get("model_name")
+            or os.getenv("SAGE_CHAT_MODEL")
+            or os.getenv("SAGELLM_MODEL_NAME")
+            or "gpt-4o-mini"
+        )
+        self._temperature = float(cfg.get("temperature", 0.2))
+        self._max_tokens = int(cfg.get("max_tokens", 256))
+        if not self._base_url:
+            raise ValueError("OpenAICompatibleGenerator requires base_url")
+
+    def execute(self, data: Any):
+        if isinstance(data, (list, tuple)) and len(data) >= 2:
+            original_payload = data[0]
+            prompt = data[1]
+        else:
+            original_payload = {}
+            prompt = data
+
+        body = {
+            "model": self._model,
+            "messages": prompt,
+            "temperature": self._temperature,
+            "max_tokens": self._max_tokens,
+            "stream": False,
+        }
+        request = urllib.request.Request(
+            f"{self._base_url}/chat/completions",
+            data=json.dumps(body).encode("utf-8"),
+            headers={
+                "Content-Type": "application/json",
+                **(
+                    {"Authorization": f"Bearer {self._api_key}"}
+                    if self._api_key
+                    else {}
+                ),
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:  # pragma: no cover - network dependent
+            details = exc.read().decode("utf-8", errors="ignore")
+            raise RuntimeError(f"Generator HTTP {exc.code}: {details}") from exc
+        except urllib.error.URLError as exc:  # pragma: no cover - network dependent
+            raise RuntimeError(f"Generator request failed: {exc.reason}") from exc
+
+        result = dict(original_payload) if isinstance(original_payload, dict) else {}
+        result["generated"] = payload
+        result.setdefault("query", result.get("query") or result.get("question") or "")
+        return result
+
+
 class ServiceDrivenQuestionSource(SourceFunction):
     """Pulls requests from the pipeline bridge and injects them into the pipeline."""
 
@@ -207,11 +286,11 @@ class QuestionSanitizer(MapFunction):
 
 
 class PromptStage(MapFunction):
-    """Wraps ``QAPromptor`` to preserve context and surface errors as data."""
+    """Builds prompt messages while preserving context and structured errors."""
 
     def __init__(self, config: dict[str, Any]):
         super().__init__()
-        self._promptor = QAPromptor(config)
+        self._promptor = SimplePromptBuilder(config)
 
     def execute(self, payload: dict[str, Any] | StopSignal | None):
         if payload is None or isinstance(payload, StopSignal):
@@ -232,7 +311,7 @@ class PromptStage(MapFunction):
                 "error": f"Prompt construction failed: {exc}",
             }
 
-        # QAPromptor returns [original_data, prompt]
+        # Prompt builder returns [original_data, prompt]
         if isinstance(prompt_result, (list, tuple)) and len(prompt_result) >= 2:
             prompt_messages = prompt_result[1]
         else:
@@ -344,7 +423,9 @@ class PublishAnswerSink(SinkFunction):
                 try:
                     response_queue.put({"status": "shutdown_ack"}, timeout=5.0)
                 except queue.Full:  # pragma: no cover - defensive guard
-                    self.logger.warning("Response queue was full during shutdown acknowledgment")
+                    self.logger.warning(
+                        "Response queue was full during shutdown acknowledgment"
+                    )
             return payload
 
         if not isinstance(payload, dict):
@@ -462,7 +543,10 @@ class TerminalAnswerSink(SinkFunction):
         response = payload.get("response")
         request = payload.get("request", {})
 
-        if isinstance(response, dict) and response.get("status") == "shutdown_requested":
+        if (
+            isinstance(response, dict)
+            and response.get("status") == "shutdown_requested"
+        ):
             print("\n✅ QA session closed. Goodbye!", flush=True)
             if self._shutdown_event is not None:
                 self._shutdown_event.set()
@@ -488,7 +572,7 @@ def _load_runtime_config() -> dict[str, Any]:
         raise FileNotFoundError(
             f"Unable to locate QA config at {CONFIG_PATH}. Did you sync the examples directory?"
         )
-    return load_config(CONFIG_PATH)
+    return _load_config(CONFIG_PATH)
 
 
 def _resolve_generator(generator_section: dict[str, Any]):
@@ -543,21 +627,14 @@ def _resolve_generator(generator_section: dict[str, Any]):
     if method == "openai":
         if not selected_config:
             return _mock_fallback("no OpenAI-compatible configuration block found")
-        # 允许 api_key 为空字符串，Generator 会从环境变量读取
-        # Allow empty api_key, Generator will read from environment variables
-        api_key = selected_config.get("api_key")
-        if api_key is None:
-            return _mock_fallback("api_key field missing for OpenAI-compatible generator")
         if not selected_config.get("base_url"):
             return _mock_fallback("missing base_url for OpenAI-compatible generator")
-        return OpenAIGenerator, selected_config, ""
+        return OpenAICompatibleGenerator, selected_config, ""
 
     if method == "hf":
-        if not selected_config:
-            return _mock_fallback("no HuggingFace configuration block found")
-        if not selected_config.get("model_name"):
-            return _mock_fallback("missing model_name for HuggingFace generator")
-        return HFGenerator, selected_config, ""
+        return _mock_fallback(
+            "local HuggingFace generator is no longer bundled in-tree"
+        )
 
     return _mock_fallback(f"unsupported generator method '{method}'")
 
@@ -630,7 +707,10 @@ def main():
 
 
 if __name__ == "__main__":
-    if os.getenv("SAGE_EXAMPLES_MODE") == "test" or os.getenv("SAGE_TEST_MODE") == "true":
+    if (
+        os.getenv("SAGE_EXAMPLES_MODE") == "test"
+        or os.getenv("SAGE_TEST_MODE") == "true"
+    ):
         print("🧪 Test mode detected - qa_pipeline_as_service is interactive")
         print("✅ Test passed: Interactive example structure validated")
         sys.exit(0)

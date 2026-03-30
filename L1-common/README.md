@@ -1,6 +1,6 @@
 # L1: Common - 基础层示例
 
-> 对应 SAGE 包：`sage-common`
+> 当前对应 SAGE surface：`isage` → `sage.foundation`
 
 ## 📖 层级说明
 
@@ -42,37 +42,38 @@
 1. 如何使用 **UnifiedInferenceClient** 进行 LLM 对话和 Embedding
 1. 如何使用配置系统
 1. 如何使用日志系统
-1. 为后续学习 Kernel 层做好准备
+1. 为后续学习 stream/runtime 层做好准备
 
 ## 🚀 快速开始 (UnifiedInferenceClient)
 
 ### 1. 启动服务
 
 ```bash
-# 启动 Gateway（包含 Control Plane）
-sage gateway start
+# 直接运行 sagellm
+sagellm run -p "Hello, SAGE!"
 
-# 启动 LLM 引擎
-sage llm engine start Qwen/Qwen2.5-0.5B-Instruct
+# 或启动 OpenAI-compatible 服务
+sagellm serve
 
-# (可选) 启动 Embedding 引擎
-sage llm engine start BAAI/bge-m3 --engine-kind embedding
+# 查看 SAGE 侧集成契约 / 探活
+sage serve gateway --json
+sage serve gateway --probe --json
 ```
 
 ### 2. 运行示例
 
 ```bash
-python examples/tutorials/L1-common/unified_inference_client_example.py
+python L1-common/unified_inference_client_example.py
 ```
 
 ### 3. 或直接使用 Python
 
 ```python
-from sage.llm import UnifiedInferenceClient
+from isagellm import UnifiedInferenceClient
 
-# 连接到 Gateway Control Plane
+# 连接到 OpenAI-compatible gateway
 client = UnifiedInferenceClient.create(
-    control_plane_url="http://localhost:8000/v1"
+    control_plane_url="http://localhost:8889/v1"
 )
 
 # 对话
@@ -90,3 +91,5 @@ print(f"向量维度: {len(vectors[0])}")
 
 - **L2-platform/** - 平台服务
 - **L3-kernel/** - 核心 API 和流处理引擎
+
+> 注：SAGE 0.3 之后，`sage chat` 已切换到 `sagellm`-first 模式；旧的 `sage llm ...` / `sage gateway ...` 命令不再是主仓当前推荐表面。

@@ -10,10 +10,8 @@ import os
 import random
 import time
 
-from sage.common.core.functions.sink_function import SinkFunction
-from sage.common.core.functions.source_function import SourceFunction
-from sage.kernel.api.local_environment import LocalEnvironment
-from sage.kernel.runtime.communication.packet import StopSignal
+from sage.foundation import SinkFunction, SourceFunction
+from sage.runtime import LocalEnvironment, StopSignal
 
 # 设置日志级别为ERROR减少输出
 os.environ.setdefault("SAGE_LOG_LEVEL", "ERROR")
@@ -44,7 +42,9 @@ class NumberSequenceSource(SourceFunction):
 
         self.counter += 1
         number = self.counter * 10 + random.randint(1, 9)
-        self.logger.debug(f"[Source] Generating number {self.counter}/{self.max_count}: {number}")
+        self.logger.debug(
+            f"[Source] Generating number {self.counter}/{self.max_count}: {number}"
+        )
         return number
 
 
@@ -72,7 +72,9 @@ class FileLineSource(SourceFunction):
 
         line = self.lines[self.current_index]
         self.current_index += 1
-        print(f"[FileSource] Reading line {self.current_index}/{len(self.lines)}: {line}")
+        print(
+            f"[FileSource] Reading line {self.current_index}/{len(self.lines)}: {line}"
+        )
         return line
 
 
@@ -206,9 +208,17 @@ def run_multi_source_batch_test():
     print("⏹️  Job will complete when ALL sources send stop signals\n")
 
     # 提交并运行
-    env.submit()
+    try:
+        env.submit()
+    except ValueError as exc:
+        if "more than one SourceTransformation" in str(exc):
+            print("⚠️  SAGE 0.3 当前编译器暂不支持单个编译单元中的多源批处理示例")
+            print("   已跳过本测试；建议改用单源示例或拆分为多个独立 pipeline。\n")
+            return False
+        raise
 
     print("\n✅ Multi-source batch test completed!\n")
+    return True
 
 
 def run_processing_chain_test():
@@ -228,7 +238,9 @@ def run_processing_chain_test():
         .filter(
             lambda x: x % 2 == 0 if not isinstance(x, (StopSignal, str)) else True
         )  # 只保留偶数，跳过StopSignal和字符串
-        .map(lambda x: x / 2 if not isinstance(x, StopSignal) else x)  # 除以2，跳过StopSignal
+        .map(
+            lambda x: x / 2 if not isinstance(x, StopSignal) else x
+        )  # 除以2，跳过StopSignal
         .map(
             lambda x: f"Result: {int(x)}" if not isinstance(x, (StopSignal, str)) else x
         )  # 格式化，跳过StopSignal和已格式化的字符串
@@ -254,6 +266,7 @@ def main():
     print("📈 Each test demonstrates different batch processing scenarios\n")
 
     try:
+        multi_source_supported = False
         # 运行所有测试
         run_simple_batch_test()
         time.sleep(2)
@@ -261,7 +274,7 @@ def main():
         run_file_processing_test()
         time.sleep(2)
 
-        run_multi_source_batch_test()
+        multi_source_supported = run_multi_source_batch_test()
         time.sleep(2)
 
         run_processing_chain_test()
@@ -273,7 +286,12 @@ def main():
         print("\n📋 Batch Processing Tests Summary:")
         print("✅ Test 1: Simple sequence - PASSED")
         print("✅ Test 2: File processing - PASSED")
-        print("✅ Test 3: Multi-source - PASSED")
+        if multi_source_supported:
+            print("✅ Test 3: Multi-source - PASSED")
+        else:
+            print(
+                "⚠️  Test 3: Multi-source - SKIPPED (not yet supported by SAGE 0.3 compiler)"
+            )
         print("✅ Test 4: Complex chain - PASSED")
         print("\n💡 Key Features Demonstrated:")
         print("   - StopSignal automatic termination")

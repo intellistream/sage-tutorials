@@ -23,9 +23,8 @@ Machine unlearning enables models to "forget" specific training data, which is c
 ## Running Examples
 
 ```bash
-# From SAGE root directory
-cd examples/tutorials/unlearning
-python machine_unlearning_examples.py
+# From this repository root
+python L3-libs/unlearning/machine_unlearning_examples.py
 ```
 
 ## Key Concepts
@@ -55,7 +54,7 @@ python machine_unlearning_examples.py
 
 ## Further Reading
 
-- Implementation details: `packages/sage-libs/src/sage/libs/unlearning/`
+- Implementation details: inspect the in-tree `sage.libs.unlearning` package installed from `isage`
 - Research papers: See docstrings in mechanism implementations
 - SAGE documentation: `docs/` directory
 
@@ -68,4 +67,4 @@ The unlearning module includes TODO items for advanced research:
 - Privacy amplification by subsampling
 - Advanced composition techniques
 
-See the source code in `packages/sage-libs/src/sage/libs/unlearning/algorithms/` for details.
+See the installed `sage.libs.unlearning.algorithms` module for details.

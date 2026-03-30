@@ -8,9 +8,8 @@
 # import os
 # import sys
 
-# from sage.kernel.api.local_environment import LocalEnvironment
-# from sage.libs.foundation.io.sink import TerminalSink
-# from sage.libs.foundation.io.source import FileSource
+# from sage.runtime import LocalEnvironment
+# from sage.foundation import SinkFunction, SourceFunction
 
 
 # def demo_checkpoint_fault_tolerance():
@@ -205,12 +204,8 @@
 #         print("=" * 70)
 
 #         print("\n📚 Learn more:")
-#         print(
-#             "   - Full documentation: packages/sage-kernel/src/sage/kernel/fault_tolerance/README.md"
-#         )
-#         print(
-#             "   - Quick reference: packages/sage-kernel/src/sage/kernel/fault_tolerance/QUICK_REFERENCE.md"
-#         )
+#         print("   - Full documentation: see the fault tolerance README in this tutorial folder")
+#         print("   - Quick reference: see the local QUICK_REFERENCE.md in this tutorial folder")
 #         print(
 #             "   - More examples: examples/kernel/fault_tolerance_examples.py"
 #         )

@@ -75,7 +75,7 @@ Ensure SAGE TSDB is installed (via quickstart or editable install):
 ```bash
 # From SAGE root directory
 ./quickstart.sh --dev --yes   # or install middleware in editable mode
-# pip install -e packages/sage-middleware
+# pip install -e .
 ```
 
 ### Run Individual Examples
@@ -109,13 +109,13 @@ done
 
 ### Basic Pipeline Flow
 
-```
+```text
 DataSource → IngestNode → QueryNode → AggregateNode → Sink
 ```
 
 ### Stream Join Flow
 
-```
+```text
 LeftStream ──┐
              ├─→ JoinNode → Sink
 RightStream ─┘
@@ -123,7 +123,7 @@ RightStream ─┘
 
 ### Advanced Analytics Flow
 
-```
+```text
 MultiSensorSource → Ingest → AnomalyDetector → Aggregation → AnalyticsSink
 ```
 
@@ -225,7 +225,7 @@ pip install -e .
 
 ```bash
 # Build sageTSDB C++ core
-cd packages/sage-middleware/src/sage/middleware/components/sage_tsdb/sageTSDB
+cd src/sage_tsdb/sageTSDB
 ./build.sh
 ```
 
@@ -246,17 +246,16 @@ After exploring these examples:
 
 ## Related Documentation
 
-- [SAGE TSDB README](../../../packages/sage-middleware/src/sage/middleware/components/sage_tsdb/README.md)
-- [Submodule Setup Guide](../../../packages/sage-middleware/src/sage/middleware/components/sage_tsdb/SUBMODULE_SETUP.md)
-- [sage-developer Guide](../../../DEVELOPER.md)
+- [SAGE Developer Guide](../../../DEVELOPER.md)
+- Check the installed `isage-tsdb` package documentation for adapter-specific setup notes
 
 ## Support
 
 For issues or questions:
 
-- GitHub Issues: https://github.com/intellistream/SAGE/issues
-- Email: shuhao_zhang@hust.edu.cn
+- GitHub Issues: <https://github.com/intellistream/SAGE/issues>
+- Email: <shuhao_zhang@hust.edu.cn>
 
 ______________________________________________________________________
 
-**Happy coding with SAGE TSDB! 🚀**
+## Happy coding with SAGE TSDB! 🚀

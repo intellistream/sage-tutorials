@@ -353,7 +353,7 @@ def run_all_examples():
     print("✓ All examples completed")
     print("=" * 60)
     print("\nFor more information:")
-    print("- See packages/sage-libs/src/sage/libs/unlearning/README.md")
+    print("- See L3-libs/unlearning/README.md")
     print("- Check algorithms/ for mechanism implementations")
     print("- Visit docs/ for research papers and references")
     print("\nKey papers:")
