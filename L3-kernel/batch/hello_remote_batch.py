@@ -13,7 +13,7 @@ import socket
 import time
 
 from sage.foundation import SinkFunction, SourceFunction
-from sage.runtime import FluttyEnvironment, StopSignal
+from sage.runtime import FlowNetEnvironment, StopSignal
 
 # 设置日志级别为ERROR减少输出
 os.environ.setdefault("SAGE_LOG_LEVEL", "ERROR")
@@ -141,7 +141,7 @@ def run_simple_batch_test():
     print("🔢 Test 1: Simple Number Sequence Batch Processing")
     print("=" * 50)
 
-    env = FluttyEnvironment("simple_batch_test")
+    env = FlowNetEnvironment("simple_batch_test")
 
     # 创建有限数据源
     source_stream = env.from_source(NumberSequenceSource, max_count=5, delay=0.5)
@@ -172,7 +172,7 @@ def run_file_processing_test():
     print("📄 Test 2: File Line Batch Processing")
     print("=" * 50)
 
-    env = FluttyEnvironment("file_batch_test")
+    env = FlowNetEnvironment("file_batch_test")
 
     # 模拟文件数据
     file_data = [
@@ -211,7 +211,7 @@ def run_multi_source_batch_test():
     print("🔀 Test 3: Multi-Source Batch Processing")
     print("=" * 50)
 
-    env = FluttyEnvironment("multi_source_batch_test")
+    env = FlowNetEnvironment("multi_source_batch_test")
 
     # 创建多个不同速度的数据源
     numbers_stream = env.from_source(NumberSequenceSource, max_count=3, delay=0.5)
@@ -241,7 +241,7 @@ def run_processing_chain_test():
     print("⛓️  Test 4: Complex Processing Chain Batch")
     print("=" * 50)
 
-    env = FluttyEnvironment("complex_batch_test")
+    env = FlowNetEnvironment("complex_batch_test")
 
     source_stream = env.from_source(NumberSequenceSource, max_count=8, delay=0.3)
 
@@ -275,10 +275,10 @@ def run_processing_chain_test():
 
 def main():
     """主测试函数"""
-    print("🎯 SAGE Batch Processing Tests with FlownetEnvironment")
+    print("🎯 SAGE Batch Processing Tests with FlowNetEnvironment")
     print("=" * 60)
     print(
-        "🧪 Testing automatic batch termination using FlownetEnvironment with JobManager"
+        "🧪 Testing automatic batch termination using FlowNetEnvironment with JobManager"
     )
     print("📈 Each test demonstrates different batch processing scenarios\n")
 
@@ -316,7 +316,7 @@ def main():
         print("✅ Test 3: Multi-source - PASSED")
         print("✅ Test 4: Complex chain - PASSED")
         print("\n💡 Key Features Demonstrated:")
-        print("   - FlownetEnvironment with JobManager")
+        print("   - FlowNetEnvironment with JobManager")
         print("   - StopSignal automatic termination")
         print("   - Source-driven batch lifecycle")
         print("   - Multi-source coordination")

@@ -4,7 +4,7 @@ This tutorial demonstrates two runtime tiers that are now owned directly by the
 main `sage` package:
 
 1) Direct backend tier: `sage.runtime.get_runtime_backend()`
-2) Environment tier: `LocalEnvironment` / `FluttyEnvironment`
+2) Environment tier: `LocalEnvironment` / `FlowNetEnvironment`
 
 The example uses one shared workload contract and verifies semantic parity on:
 
@@ -85,8 +85,8 @@ def _run_local(values: list[int]) -> TutorialReport:
     )
 
 
-def _run_flutty(values: list[int]) -> TutorialReport:
-    env = sage_runtime.FluttyEnvironment("tutorial_flutty_runtime_api")
+def _run_flownet(values: list[int]) -> TutorialReport:
+    env = sage_runtime.FlowNetEnvironment("tutorial_flownet_runtime_api")
 
     stream_handle = MagicMock(name="stream_handle")
     stream_handle.is_running = True
@@ -95,7 +95,7 @@ def _run_flutty(values: list[int]) -> TutorialReport:
     graph.submit.return_value = stream_handle
     compiler = MagicMock(name="pipeline_compiler")
     compiler.compile.return_value = graph
-    backend = MagicMock(name="flutty_runtime_backend")
+    backend = MagicMock(name="flownet_runtime_backend")
 
     with patch(
         "sage.runtime.environments.runtime_backend.get_runtime_backend",
@@ -110,15 +110,15 @@ def _run_flutty(values: list[int]) -> TutorialReport:
         return_value=backend,
     ):
         with patch("sage.runtime.environments.PipelineCompiler", return_value=compiler):
-            graph.submit.side_effect = RuntimeError("flutty-tutorial-error")
+            graph.submit.side_effect = RuntimeError("flownet-tutorial-error")
             error_propagates = False
             try:
                 env.submit(autostop=False)
             except RuntimeError as exc:
-                error_propagates = str(exc) == "flutty-tutorial-error"
+                error_propagates = str(exc) == "flownet-tutorial-error"
 
     return TutorialReport(
-        "flutty_environment_advanced",
+        "flownet_environment_advanced",
         result,
         type(ref).__name__,
         error_propagates,
@@ -127,7 +127,7 @@ def _run_flutty(values: list[int]) -> TutorialReport:
 
 def main() -> None:
     payload = [1, 2, 3]
-    reports = [_run_backend_api(payload), _run_local(payload), _run_flutty(payload)]
+    reports = [_run_backend_api(payload), _run_local(payload), _run_flownet(payload)]
 
     print("Runtime API layering tutorial report:")
     for report in reports:

@@ -15,7 +15,7 @@
 运行时 API 学习建议：
 
 - 默认路径（推荐）：`LocalEnvironment`
-- 高级路径（专家）：`FluttyEnvironment` 与 backend abstraction
+- 高级路径（专家）：`FlowNetEnvironment` 与 backend abstraction
 
 ## 📚 目录结构
 
@@ -71,7 +71,7 @@ L3-kernel/
 
 - `hello_future_world.py` - Future 异步处理
 - `hello_realistic_service_example.py` - 实际服务示例
-- `runtime_api_layering_advanced.py` - `LocalEnvironment` / `FluttyEnvironment` 分层对照
+- `runtime_api_layering_advanced.py` - `LocalEnvironment` / `FlowNetEnvironment` 分层对照
 - `fault_tolerance/` - 容错和检查点
 
 ## 🎯 学习目标

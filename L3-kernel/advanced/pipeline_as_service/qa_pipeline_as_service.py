@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import os
 import queue
-import sys
 import threading
 import time
 import urllib.error
@@ -713,6 +712,6 @@ if __name__ == "__main__":
     ):
         print("🧪 Test mode detected - qa_pipeline_as_service is interactive")
         print("✅ Test passed: Interactive example structure validated")
-        sys.exit(0)
+        raise SystemExit(0)
 
     main()

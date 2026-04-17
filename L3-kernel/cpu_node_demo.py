@@ -28,7 +28,7 @@ from typing import Any
 from sage.foundation import MapFunction, SinkFunction, SourceFunction
 from sage.runtime import (
     BaseScheduler,
-    FluttyEnvironment,
+    FlowNetEnvironment,
     NodeSelector,
     PlacementDecision,
     StopSignal,
@@ -225,8 +225,8 @@ def demo_basic_cpu_node():
     print("  ✓ 节点能够正常执行并返回结果")
     print("  ✓ 任务执行过程中具备基本的监控和日志记录能力\n")
 
-    # 创建FlownetEnvironment（默认会使用CPU节点）
-    env = FluttyEnvironment(name="cpu_node_basic_demo")
+    # 创建FlowNetEnvironment（默认会使用CPU节点）
+    env = FlowNetEnvironment(name="cpu_node_basic_demo")
 
     # 构建CPU任务流
     (
@@ -265,7 +265,7 @@ def demo_cpu_scheduler():
 
     # 创建使用CPU专用调度器的环境
     cpu_scheduler = CPUOnlyScheduler()
-    env = FluttyEnvironment(
+    env = FlowNetEnvironment(
         name="cpu_scheduler_demo",
         scheduler=cpu_scheduler,
     )
@@ -311,7 +311,7 @@ def demo_cpu_node_monitoring():
     print("  ✓ 详细的日志记录")
     print("  ✓ JobManager健康检查\n")
 
-    env = FluttyEnvironment(name="cpu_monitoring_demo")
+    env = FlowNetEnvironment(name="cpu_monitoring_demo")
 
     # 构建任务流
     (
@@ -430,7 +430,7 @@ def demo_resource_requirements():
     print("  ✓ 智能节点选择\n")
 
     # 创建环境
-    env = FluttyEnvironment(name="cpu_resource_demo")
+    env = FlowNetEnvironment(name="cpu_resource_demo")
 
     # CPUComputeProcessor 已声明: cpu_required=2, memory_required="2GB", gpu_required=0
     print("💡 CPUComputeProcessor 资源需求:")
@@ -545,7 +545,7 @@ def main():
 
         print("\n💡 关键要点:")
         print("  • CPU节点通过NodeSelector自动选择（gpu_required=0）")
-        print("  • FluttyEnvironment自动与运行时后端协作")
+        print("  • FlowNetEnvironment自动与运行时后端协作")
         print("  • 支持自定义调度策略（CPUOnlyScheduler）")
         print("  • 内置监控和日志系统")
         print("  • 可在无GPU环境中运行")
@@ -555,7 +555,7 @@ def main():
         print("\n🔗 相关文件:")
         print("  • JobManager: sage/runtime/job_manager.py")
         print("  • NodeSelector: sage/runtime/scheduler.py")
-        print("  • FluttyEnvironment: sage/runtime/environments.py")
+        print("  • FlowNetEnvironment: sage/runtime/environments.py")
         print("  • Scheduler: sage/runtime/scheduler.py")
         print("  • 日志目录: .sage/logs/jobmanager/")
 

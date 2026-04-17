@@ -2,7 +2,9 @@
 """
 Checkpoint 容错机制测试
 
-测试任务在失败后能否从 checkpoint 恢复
+当前主仓不再包含历史 checkpoint/restart 自动恢复子系统。
+本文件保留为行为说明：即使传入历史 fault_tolerance 配置，
+当前 lightweight runtime 仍会直接传播失败，而不会自动恢复。
 @test:timeout=120
 """
 
@@ -87,7 +89,7 @@ class TestSink(SinkFunction):
 
 
 def test_checkpoint_recovery():
-    """测试 checkpoint 容错恢复"""
+    """演示当前主仓不会自动执行 checkpoint 恢复。"""
     print("\n" + "=" * 60)
     print("Testing Checkpoint-Based Fault Tolerance")
     print("=" * 60 + "\n")
@@ -123,16 +125,13 @@ def test_checkpoint_recovery():
     env.from_source(TestSource).map(TestProcessor).sink(TestSink)
     print("✅ Pipeline built\n")
 
-    # 提交执行
     print("🚀 Submitting pipeline...")
     try:
         env.submit(autostop=True)
-        print("\n✅ Pipeline completed successfully")
+        raise AssertionError("Checkpoint recovery unexpectedly succeeded in the current core")
     except Exception as e:
-        print(f"\n❌ Pipeline failed: {e}")
-        import traceback
-
-        traceback.print_exc()
+        print(f"\nℹ️ Failure propagated as expected: {e}")
+        print("ℹ️ The current in-tree runtime does not implement automatic checkpoint recovery.")
 
     print("\n" + "=" * 60)
     print("Test Completed")
@@ -140,7 +139,7 @@ def test_checkpoint_recovery():
 
 
 def test_restart_recovery():
-    """测试重启容错恢复"""
+    """演示当前主仓不会自动执行 restart 恢复。"""
     print("\n" + "=" * 60)
     print("Testing Restart-Based Fault Tolerance")
     print("=" * 60 + "\n")
@@ -173,16 +172,13 @@ def test_restart_recovery():
     env.from_source(TestSource).map(TestProcessor).sink(TestSink)
     print("✅ Pipeline built\n")
 
-    # 提交执行
     print("🚀 Submitting pipeline...")
     try:
         env.submit(autostop=True)
-        print("\n✅ Pipeline completed successfully")
+        raise AssertionError("Restart recovery unexpectedly succeeded in the current core")
     except Exception as e:
-        print(f"\n❌ Pipeline failed: {e}")
-        import traceback
-
-        traceback.print_exc()
+        print(f"\nℹ️ Failure propagated as expected: {e}")
+        print("ℹ️ The current in-tree runtime does not implement automatic restart recovery.")
 
     print("\n" + "=" * 60)
     print("Test Completed")

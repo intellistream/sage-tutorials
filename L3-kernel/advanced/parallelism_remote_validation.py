@@ -3,7 +3,7 @@
 Remote Environment Parallelism Validation Example
 
 This example demonstrates and validates parallelism hints functionality
-using FlownetEnvironment (Flownet-based distributed execution). It shows how
+using FlowNetEnvironment (FlowNet-based distributed execution). It shows how
 parallelism settings work in a distributed environment and verifies that
 the ExecutionGraph creates the correct number of parallel nodes across
 remote workers.
@@ -16,7 +16,7 @@ import threading
 import time
 
 from sage.foundation import BaseCoMapFunction, BaseFunction, BatchFunction
-from sage.runtime import FluttyEnvironment
+from sage.runtime import FlowNetEnvironment
 
 
 class NumberListSource(BatchFunction):
@@ -146,14 +146,14 @@ def validate_remote_single_stream_parallelism():
 
     # Initialize distributed runtime for processing
     # Note: runtime configuration is currently handled at the JobManager level,
-    # not directly through FlownetEnvironment constructor. This is a potential
+    # not directly through FlowNetEnvironment constructor. This is a potential
     # improvement area for SAGE architecture.
     try:
-        env = FluttyEnvironment(name="remote_single_stream_test")
-        print("✅ FluttyEnvironment initialized successfully")
+        env = FlowNetEnvironment(name="remote_single_stream_test")
+        print("✅ FlowNetEnvironment initialized successfully")
     except Exception as e:
-        print(f"⚠️  FluttyEnvironment initialization warning: {e}")
-        env = FluttyEnvironment(name="remote_single_stream_test")
+        print(f"⚠️  FlowNetEnvironment initialization warning: {e}")
+        env = FlowNetEnvironment(name="remote_single_stream_test")
 
     # Test data - larger dataset for distributed processing
     numbers = list(range(1, 31))  # 1 to 30
@@ -202,10 +202,10 @@ def validate_remote_multi_stream_parallelism():
     print("=" * 70)
 
     try:
-        env = FluttyEnvironment(name="remote_multi_stream_test")
+        env = FlowNetEnvironment(name="remote_multi_stream_test")
     except Exception as e:
-        print(f"⚠️  FluttyEnvironment initialization warning: {e}")
-        env = FluttyEnvironment(name="remote_multi_stream_test")
+        print(f"⚠️  FlowNetEnvironment initialization warning: {e}")
+        env = FlowNetEnvironment(name="remote_multi_stream_test")
 
     # Create streams with more data for distributed processing
     stream1_data = list(range(1, 16, 2))  # [1, 3, 5, 7, 9, 11, 13, 15]
@@ -252,11 +252,11 @@ def validate_flownet_distributed_execution():
     print("=" * 70)
 
     try:
-        env = FluttyEnvironment(name="flutty_distribution_test")
-        print("✅ FluttyEnvironment initialized")
+        env = FlowNetEnvironment(name="flownet_distribution_test")
+        print("✅ FlowNetEnvironment initialized")
     except Exception as e:
-        print(f"⚠️  FluttyEnvironment initialization warning: {e}")
-        env = FluttyEnvironment(name="flutty_distribution_test")
+        print(f"⚠️  FlowNetEnvironment initialization warning: {e}")
+        env = FlowNetEnvironment(name="flownet_distribution_test")
 
     # Create a pipeline designed to show distributed execution
     large_dataset = list(range(1, 51))  # 1 to 50 - enough data for distribution
@@ -288,7 +288,7 @@ def validate_flownet_distributed_execution():
     print("   - Each parallel instance may run on different remote workers")
     print("   - Process IDs will differ across workers")
     print("   - Work is distributed based on available resources")
-    print("   - FlownetEnvironment handles load balancing and coordination")
+    print("   - FlowNetEnvironment handles load balancing and coordination")
 
     return env
 
@@ -296,7 +296,7 @@ def validate_flownet_distributed_execution():
 def main():
     """Main function to run all remote validation tests"""
     print("🚀 SAGE Remote Environment Parallelism Validation")
-    print("This example validates parallelism hints in FlownetEnvironment (Flownet)")
+    print("This example validates parallelism hints in FlowNetEnvironment (FlowNet)")
 
     try:
         # Run all validation tests
@@ -310,7 +310,7 @@ def main():
         print("✅ Remote single stream parallelism: Tested with remote workers")
         print("✅ Remote multi-stream parallelism: Tested distributed CoMap")
         print("✅ Remote distributed execution: Verified parallel worker distribution")
-        print("✅ FlownetEnvironment direct parallelism: WORKING CORRECTLY")
+        print("✅ FlowNetEnvironment direct parallelism: WORKING CORRECTLY")
 
         print("\n📊 Total remote environments created: 3")
         print(
@@ -324,13 +324,13 @@ def main():
         )
         print("   - Multi-stream operations (CoMap) support distributed parallelism")
         print(
-            "   - FlownetEnvironment automatically handles worker assignment and coordination"
+            "   - FlowNetEnvironment automatically handles worker assignment and coordination"
         )
 
     except Exception as e:
         print(f"\n❌ Remote validation encountered an error: {e}")
         print(
-            "💡 This might be due to FlownetEnvironment not being available or configured properly"
+            "💡 This might be due to FlowNetEnvironment not being available or configured properly"
         )
         print("   Please ensure the JobManager service is running and accessible")
         print("   And that your system supports remote distributed execution")
